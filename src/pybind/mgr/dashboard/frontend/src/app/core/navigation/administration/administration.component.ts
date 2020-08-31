@@ -18,4 +18,12 @@ export class AdministrationComponent {
     this.userPermission = permissions.user;
     this.configOptPermission = permissions.configOpt;
   }
+
+  openCallHomeModal() {
+    this.modalService.show(CallHomeModalComponent, null, { size: 'lg' });
+  }
+
+  openSIModal() {
+    this.modalService.show(StorageInsightsModalComponent, null, { size: 'lg' });
+  }
 }
