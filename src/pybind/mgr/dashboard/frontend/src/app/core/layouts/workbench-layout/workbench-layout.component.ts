@@ -20,6 +20,9 @@ import { CallHomeNotificationService } from '~/app/shared/services/call-home-not
 import { StorageInsightsNotificationService } from '~/app/shared/services/storage-insights-notification.service';
 import { environment } from '~/environments/environment';
 import _ from 'lodash';
+import { environment } from '../../../../environments/environment.ibm';
+import { CallHomeNotificationService } from '~/app/shared/services/call-home-notification.service';
+import { StorageInsightsNotificationService } from '~/app/shared/services/storage-insights-notification.service';
 
 @Component({
   selector: 'cd-workbench-layout',
@@ -40,6 +43,7 @@ export class WorkbenchLayoutComponent implements OnInit, OnDestroy {
   @HostBinding('class') get class(): string {
     return 'top-notification-' + this.notifications.length;
   }
+  environment = environment;
 
   constructor(
     public router: Router,
@@ -93,15 +97,29 @@ export class WorkbenchLayoutComponent implements OnInit, OnDestroy {
       })
     );
     this.subs.add(
-      this.telemetryNotificationService.update.subscribe((visible: boolean) => {
-        this.showTopNotification('telemetryNotificationEnabled', visible);
-      })
-    );
-    this.subs.add(
       this.motdNotificationService.motd$.subscribe((motd: any) => {
         this.showTopNotification('motdNotificationEnabled', _.isPlainObject(motd));
       })
     );
+    if (this.environment.build === 'ibm') {
+      this.subs.add(
+        this.callHomeNotificationService.remindLaterOn$.subscribe((visible: boolean) => {
+          this.showTopNotification('callHomeNotificationEnabled', visible);
+        })
+      );
+      this.subs.add(
+        this.storageInsightsNotificationService.remindLaterOn$.subscribe((visible: boolean) => {
+          this.showTopNotification('storagteInsightsEnabled', visible);
+        })
+      );
+    } else {
+      // disabling telemetry notification in ibm builds
+      this.subs.add(
+        this.telemetryNotificationService.update.subscribe((visible: boolean) => {
+          this.showTopNotification('telemetryNotificationEnabled', visible);
+        })
+      );
+    }
     this.faviconService.init();
 
     this.updatePageHeaderFromRoute();
