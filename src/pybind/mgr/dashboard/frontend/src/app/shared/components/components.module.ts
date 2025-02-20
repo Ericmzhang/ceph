@@ -137,6 +137,10 @@ import { TearsheetStepComponent } from './tearsheet-step/tearsheet-step.componen
 import { PageHeaderComponent } from './page-header/page-header.component';
 import { SidebarLayoutComponent } from './sidebar-layout/sidebar-layout.component';
 import { NumberWithUnitComponent } from './number-with-unit/number-with-unit.component';
+import { ProductiveCardComponent } from './productive-card/productive-card.component';
+import { CallHomeConnectionInfoComponent } from './call-home-connection-info/call-home-connection-info.component';
+import { CallHomeConnectivityStatusComponent } from './call-home-connectivity-status/call-home-connectivity-status.component';
+import { CallHomeModalComponent } from './call-home-modal/call-home-modal.component';
 
 @NgModule({
   imports: [
@@ -233,7 +237,14 @@ import { NumberWithUnitComponent } from './number-with-unit/number-with-unit.com
     TearsheetStepComponent,
     PageHeaderComponent,
     SidebarLayoutComponent,
-    NumberWithUnitComponent
+    NumberWithUnitComponent,
+    ProductiveCardComponent,
+    CallHomeModalComponent,
+    CallHomeNotificationComponent,
+    StorageInsightsModalComponent,
+    StorageInsightsNotificationComponent,
+    CallHomeConnectionInfoComponent,
+    CallHomeConnectivityStatusComponent
   ],
   providers: [provideCharts(withDefaultRegisterables())],
   exports: [
@@ -279,13 +290,17 @@ import { NumberWithUnitComponent } from './number-with-unit/number-with-unit.com
     TearsheetStepComponent,
     PageHeaderComponent,
     SidebarLayoutComponent,
-    NumberWithUnitComponent
+    NumberWithUnitComponent,
+    ProductiveCardComponent,
+    CallHomeNotificationComponent,
+    StorageInsightsNotificationComponent,
+    CallHomeConnectionInfoComponent,
+    CallHomeConnectivityStatusComponent
   ]
 })
 export class ComponentsModule {
   constructor(private iconService: IconService) {
     this.iconService.registerAll([
-      InfoIcon,
       CopyIcon,
       EditIcon,
       CodeIcon,

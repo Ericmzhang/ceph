@@ -12,6 +12,7 @@ import { delay, retryWhen, switchMap, tap } from 'rxjs/operators';
 import { SummaryService } from '../services/summary.service';
 
 const GLOBAL = 'global';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 
 /** Modules that require --force when not all mgr daemons support them. */
 const FORCE_ENABLE_MODULES = new Set(['feedback']);
@@ -98,7 +99,8 @@ export class MgrModuleService {
     notificationText?: string,
     navigateByUrl?: boolean,
     reconnectingMessage: string = $localize`Reconnecting, please wait ...`,
-    force: boolean = false
+    force: boolean = false,
+    activeModal?: NgbActiveModal
   ): void {
     const moduleToggle$ = enabled ? this.disable(module) : this.enable(module, force);
 
@@ -133,6 +135,8 @@ export class MgrModuleService {
               if (table) {
                 table.refreshBtn();
               }
+
+              if (activeModal) activeModal.close();
 
               if (notificationText) {
                 this.notificationService.show(

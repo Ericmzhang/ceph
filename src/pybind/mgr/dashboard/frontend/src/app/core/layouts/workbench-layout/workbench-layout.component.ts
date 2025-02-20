@@ -16,6 +16,9 @@ import {
   FeatureTogglesMap,
   FeatureTogglesService
 } from '~/app/shared/services/feature-toggles.service';
+import { CallHomeNotificationService } from '~/app/shared/services/call-home-notification.service';
+import { StorageInsightsNotificationService } from '~/app/shared/services/storage-insights-notification.service';
+import { environment } from '~/environments/environment';
 import _ from 'lodash';
 
 @Component({
@@ -29,6 +32,7 @@ export class WorkbenchLayoutComponent implements OnInit, OnDestroy {
   notifications: string[] = [];
   private subs = new Subscription();
   permissions: Permissions;
+  environment = environment;
   pageHeaderTitle: string | null = null;
   pageHeaderDescription: string | null = null;
   enabledFeature$: Observable<FeatureTogglesMap>;
@@ -46,7 +50,9 @@ export class WorkbenchLayoutComponent implements OnInit, OnDestroy {
     private authStorageService: AuthStorageService,
     private telemetryNotificationService: TelemetryNotificationService,
     private motdNotificationService: MotdNotificationService,
-    private featureTogglesService: FeatureTogglesService
+    private featureTogglesService: FeatureTogglesService,
+    private callHomeNotificationService: CallHomeNotificationService,
+    private storageInsightsNotificationService: StorageInsightsNotificationService
   ) {
     this.permissions = this.authStorageService.getPermissions();
     this.enabledFeature$ = this.featureTogglesService.get();
@@ -56,9 +62,30 @@ export class WorkbenchLayoutComponent implements OnInit, OnDestroy {
     if (this.permissions.configOpt.read) {
       this.subs.add(this.multiClusterService.startPolling());
       this.subs.add(this.multiClusterService.startClusterTokenStatusPolling());
+      this.subs.add(this.summaryService.startPolling());
+      this.subs.add(this.taskManagerService.init(this.summaryService));
+
+      if (this.environment.build === 'ibm') {
+        this.subs.add(
+          this.callHomeNotificationService.remindLaterOn$.subscribe((visible: boolean) => {
+            this.showTopNotification('callHomeNotificationEnabled', visible);
+          })
+        );
+        this.subs.add(
+          this.storageInsightsNotificationService.remindLaterOn$.subscribe((visible: boolean) => {
+            this.showTopNotification('storagteInsightsEnabled', visible);
+          })
+        );
+      } else {
+        // disabling telemetry notification in ibm builds
+        this.subs.add(
+          this.telemetryNotificationService.update.subscribe((visible: boolean) => {
+            this.showTopNotification('telemetryNotificationEnabled', visible);
+          })
+        );
+      }
     }
-    this.subs.add(this.summaryService.startPolling());
-    this.subs.add(this.taskManagerService.init(this.summaryService));
+
 
     this.subs.add(
       this.authStorageService.isPwdDisplayed$.subscribe((isDisplayed) => {
