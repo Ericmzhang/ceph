@@ -755,11 +755,48 @@ bool HealthMonitor::check_leader_health()
   //CHECK_ERASURE_CODE_PROFILE
   check_erasure_code_profiles(&next);
 
+  // MON_COLOCATED
+  check_for_colocated_monitors(&next);
+
   if (next != leader_checks) {
     changed = true;
     leader_checks = next;
   }
   return changed;
+}
+
+void HealthMonitor::check_for_colocated_monitors(health_check_map_t *checks)
+{
+  std::unordered_map<std::string, std::vector<std::string>> unique_addrs;
+  for (auto& [mon_id, mon_info] : mon.monmap->mon_info) {
+    std::string ip = mon_info.public_addrs.msgr2_addr().ip_only_to_str();
+    unique_addrs[ip].push_back(mon_id);
+  }
+
+  bool has_colocated_mon = false;
+  ostringstream ss, ds;
+  for (const auto& [ip, mon_ids]: unique_addrs) {
+    unsigned size = mon_ids.size();
+    if (size > 1) {
+      has_colocated_mon = true;
+      ss << size << " monitors (";
+      for (size_t i = 0; i < size; ++i) {
+        ss << mon_ids[i];
+        if (i != size - 1)
+            ss << ",";
+      }
+      ss << ") share the same ip = " << ip;
+      ss << "\n";
+      for(const auto& name: mon_ids) {
+        ds << "mon." << name << " is on the same node as another monitor\n";
+      }
+    }
+  }
+  
+  if (has_colocated_mon) {
+    auto& d = checks->add("MON_COLOCATED", HEALTH_WARN, ss.str(), 1);
+    d.detail.push_back(ds.str());
+  }
 }
 
 void HealthMonitor::check_for_older_version(health_check_map_t *checks)
