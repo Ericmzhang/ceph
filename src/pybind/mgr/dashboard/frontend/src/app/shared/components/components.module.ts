@@ -138,6 +138,10 @@ import { PageHeaderComponent } from './page-header/page-header.component';
 import { SidebarLayoutComponent } from './sidebar-layout/sidebar-layout.component';
 import { NumberWithUnitComponent } from './number-with-unit/number-with-unit.component';
 import { ProductiveCardComponent } from './productive-card/productive-card.component';
+import { CallHomeModalComponent } from './call-home-modal/call-home-modal.component';
+import { CallHomeNotificationComponent } from './call-home-notification/call-home-notification.component';
+import { StorageInsightsModalComponent } from './storage-insights-modal/storage-insights-modal.component';
+import { StorageInsightsNotificationComponent } from './storage-insights-notification/storage-insights-notification.component';
 import { CallHomeConnectionInfoComponent } from './call-home-connection-info/call-home-connection-info.component';
 import { CallHomeConnectivityStatusComponent } from './call-home-connectivity-status/call-home-connectivity-status.component';
 import { CallHomeModalComponent } from './call-home-modal/call-home-modal.component';
@@ -292,6 +296,7 @@ import { CallHomeModalComponent } from './call-home-modal/call-home-modal.compon
     SidebarLayoutComponent,
     NumberWithUnitComponent,
     ProductiveCardComponent,
+    CallHomeModalComponent,
     CallHomeNotificationComponent,
     StorageInsightsNotificationComponent,
     CallHomeConnectionInfoComponent,
