@@ -68,6 +68,7 @@ import { CephfsMirroringWizardComponent } from './ceph/cephfs/cephfs-mirroring-w
 import { CephfsMirroringErrorComponent } from './ceph/cephfs/cephfs-mirroring-error/cephfs-mirroring-error.component';
 import { OverviewComponent } from './ceph/overview/overview.component';
 import { NfsClusterFormComponent } from './ceph/nfs/nfs-cluster-form/nfs-cluster-form.component';
+import { OverviewComponent } from './ceph/overview/overview.component';
 
 @Injectable()
 export class PerformanceCounterBreadcrumbsResolver extends BreadcrumbsResolver {
