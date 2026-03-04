@@ -174,6 +174,10 @@ export const ICON_TYPE = {
   leftArrow: 'caret--left',
   rightArrow: 'caret--right',
   locked: 'locked',
+  ibmCloudBareMetalServer: 'ibm-cloud--bare-metal-server',
+  ibmCloudDedicatedHost: 'ibm-cloud--dedicated-host',
+  clusterIcon: 'web-services--cluster',
+  download: 'download',
   cloudMonitoring: 'cloud--monitoring'
 } as const;
 

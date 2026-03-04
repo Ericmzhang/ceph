@@ -13,10 +13,6 @@
         @if (features.dashboard && environment.build !== 'ibm' && permissions.configOpt.read) {
         <cd-telemetry-notification></cd-telemetry-notification>
         }
-        @if (environment.build === 'ibm' && permissions.configOpt.read) {
-        <cd-call-home-notification></cd-call-home-notification>
-        <cd-storage-insights-notification></cd-storage-insights-notification>
-        }
         }
       </div>
       <cd-context></cd-context>

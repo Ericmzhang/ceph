@@ -132,6 +132,8 @@ import Locked16 from '@carbon/icons/es/locked/16';
 import WebServicesCluster20 from '@carbon/icons/es/web-services--cluster/20';
 import WebServicesCluster32 from '@carbon/icons/es/web-services--cluster/32';
 import CloudMonitoring16 from '@carbon/icons/es/cloud--monitoring/16';
+import Warning16 from '@carbon/icons/es/warning/16';
+import Deploy16 from '@carbon/icons/es/deploy/16';
 
 import { TearsheetStepComponent } from './tearsheet-step/tearsheet-step.component';
 import { PageHeaderComponent } from './page-header/page-header.component';
@@ -144,7 +146,6 @@ import { StorageInsightsModalComponent } from './storage-insights-modal/storage-
 import { StorageInsightsNotificationComponent } from './storage-insights-notification/storage-insights-notification.component';
 import { CallHomeConnectionInfoComponent } from './call-home-connection-info/call-home-connection-info.component';
 import { CallHomeConnectivityStatusComponent } from './call-home-connectivity-status/call-home-connectivity-status.component';
-import { CallHomeModalComponent } from './call-home-modal/call-home-modal.component';
 
 @NgModule({
   imports: [
@@ -343,6 +344,8 @@ export class ComponentsModule {
       Locked16,
       WebServicesCluster20,
       WebServicesCluster32,
+      Deploy16,
+      Warning16,
       CloudMonitoring16
     ]);
   }

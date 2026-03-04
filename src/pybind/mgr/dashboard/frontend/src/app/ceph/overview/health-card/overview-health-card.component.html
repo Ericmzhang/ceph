@@ -28,6 +28,7 @@
     <ng-template #telemetryDescription>
       <div class="cds--type-heading-compact-01 cds-mb-2"
            i18n>Support & diagnostics</div>
+      @if (environment.build !== 'ibm') {
       <div cdsStack="horizontal"
            [gap]="10">
         <span i18n>Telemetry</span>
@@ -41,6 +42,34 @@
           }
         </span>
       </div>
+      } @else {
+      <table>
+        <tr>
+          <td class="cds-pr-8" i18n>Call Home</td>
+          <td>
+            @if (callHomeEnabled$ | async) {
+            <cd-icon type="success"></cd-icon>&nbsp;
+            <span i18n>on</span>
+            } @else {
+            <cd-icon type="infoCircle"></cd-icon>&nbsp;
+            <span i18n>off</span>
+            }
+          </td>
+        </tr>
+        <tr>
+          <td class="cds-pr-8" i18n>Storage Insight</td>
+          <td>
+            @if (storageInsightsEnabled$ | async) {
+            <cd-icon type="success"></cd-icon>&nbsp;
+            <span i18n>on</span>
+            } @else {
+            <cd-icon type="infoCircle"></cd-icon>&nbsp;
+            <span i18n>off</span>
+            }
+          </td>
+        </tr>
+      </table>
+      }
     </ng-template>
     <div cdsStack="horizontal"
          [gap]="2">
