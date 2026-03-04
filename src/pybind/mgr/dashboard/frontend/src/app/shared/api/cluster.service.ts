@@ -34,4 +34,12 @@ export class ClusterService {
   createUser(payload: CephClusterUser) {
     return this.http.post(`${this.baseURL}/user`, payload);
   }
+
+  getLicense(image_name: string): Observable<string> {
+    return this.http.get<string>(`${this.baseURL}/license/${encodeURIComponent(image_name)}`);
+  }
+
+  acceptLicense(image_name: string): Observable<void> {
+    return this.http.put<void>(`${this.baseURL}/license`, { image_name: image_name });
+  }
 }
