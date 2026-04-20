@@ -82,6 +82,7 @@ type HwRowVM = {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class OverviewHealthCardComponent {
+  environment = environment;
   private readonly summaryService = inject(SummaryService);
   private readonly upgradeService = inject(UpgradeService);
   private readonly healthService = inject(HealthService);
