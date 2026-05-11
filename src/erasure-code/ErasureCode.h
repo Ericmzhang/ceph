@@ -52,7 +52,9 @@ class ErasureCode : public ErasureCodeInterface {
     return _profile;
   }
 
+  using ErasureCodeInterface::create_rule;
   int create_rule(const std::string &name,
+                  int num_zones,
                   CrushWrapper &crush,
                   std::ostream *ss) const override;
 
