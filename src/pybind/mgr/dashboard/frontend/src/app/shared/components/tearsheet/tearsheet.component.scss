@@ -4,18 +4,20 @@
 .cds--modal-container.cds--modal-container--lg {
   position: fixed;
 
-  // Fill remaining viewport between the 88px top inset and 64px bottom inset.
+  // Use insets to size the fixed container. Avoid mixing explicit height with
+  // top/bottom constraints to prevent platform-specific clipping.
   // Carbon has no API for tearsheet insets.
-  block-size: calc(100vh - 88px - 64px);
-  max-block-size: calc(100vh - 88px - 64px);
+  block-size: auto;
   inline-size: auto;
 
   inset-block-start: 88px;
-  inset-block-end: 64px;
+  // 64px bottom margin to match left/right; Carbon has no API for tearsheet insets
+  inset-block-end: calc(64px + env(safe-area-inset-bottom, 0px));
+  inset-inline-end: 64px;
 
   // 64px margins left & right
   inset-inline-start: 64px;
-  inset-inline-end: 64px;
+  max-block-size: none;
   max-inline-size: none;
   display: flex;
   flex-direction: column;
@@ -207,6 +209,10 @@
 .tearsheet-footer {
   background-color: var(--cds-layer-01);
   flex-shrink: 0;
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  padding-bottom: calc(var(--cds-spacing-05) + env(safe-area-inset-bottom, 0px));
 
   &-submit {
     display: flex;
