@@ -145,9 +145,11 @@ export class OverviewComponent {
   );
 
   readonly callHomeStatus$: Observable<any> = this.refreshIntervalObs(() =>
-    this.callHomeService.getCallHomeStatus().pipe(
-      switchMap((status: boolean) => (status ? this.callHomeService.status() : of(null)))
-    )
+    this.permissions?.configOpt?.read && this.environment.build === 'ibm'
+      ? this.callHomeService
+          .getCallHomeStatus()
+          .pipe(switchMap((status: boolean) => (status ? this.callHomeService.status() : of(null))))
+      : of(null)
   ).pipe(shareReplay({ bufferSize: 1, refCount: true }));
 
   readonly averageConsumption$ = this.isPromethuesConfigured$.pipe(

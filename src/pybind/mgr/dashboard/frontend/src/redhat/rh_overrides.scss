@@ -1,4 +1,5 @@
 @use '/src/redhat/variables' as vv;
+@use '@carbon/layout' as layout;
 
 /* stylelint-disable */
 $pf-global--font-path: '~@patternfly/patternfly/assets/fonts';
@@ -9,7 +10,7 @@ $pf-global--image-path: '~@patternfly/patternfly/assets/images';
 
 @import '@patternfly/patternfly/patternfly';
 
-/*Icon Overrides*/
+/* Icon Overrides */
 .fa-question-circle-o::before {
   content: '\f059' !important;
 }
@@ -45,6 +46,7 @@ $pf-global--image-path: '~@patternfly/patternfly/assets/images';
 }
 
 .cds--btn--tertiary {
+  @extend .pf-c-button, .pf-m-tertiary;
   border-color: vv.$primary !important;
   color: vv.$primary !important;
 
@@ -76,12 +78,14 @@ $pf-global--image-path: '~@patternfly/patternfly/assets/images';
 .cds--btn--primary,
 .primary-dropdown-btn {
   @extend .pf-c-button, .pf-m-primary;
+
   background-color: vv.$primary !important;
   min-block-size: 0% !important;
 }
 
 .cds--btn--secondary {
   @extend .pf-c-button, .pf-m-secondary;
+
   min-block-size: 0% !important;
 
   &:hover,
@@ -171,6 +175,7 @@ cd-form-button-panel {
 
         label {
           @extend .pf-c-form__label-text;
+
           color: var(--pf-global--Color--100);
           padding-left: 0 !important;
         }
@@ -184,6 +189,7 @@ cd-form-button-panel {
 
           &::before {
             @extend .pf-c-title, .pf-m-3xl;
+
             color: vv.$black !important;
             content: 'Log in to your account \A \A' !important;
             white-space: pre-wrap !important;
@@ -191,6 +197,7 @@ cd-form-button-panel {
 
           input.btn-accent {
             @extend .pf-c-button, .pf-m-primary, .pf-m-block;
+
             background-color: vv.$primary !important;
             color: vv.$white !important;
             font-size: 0.9rem !important;
@@ -247,6 +254,7 @@ cd-form-button-panel {
 
       .form-control {
         @extend .pf-c-form-control;
+
         background-color: vv.$white !important;
         border-bottom: 2px solid var($pf-color-red-100) !important;
         color: vv.$black !important;
@@ -294,6 +302,7 @@ cd-login-password-form {
 
   .form-control {
     @extend .pf-c-form-control;
+
     background-color: vv.$white !important;
     border-radius: unset !important;
     color: vv.$black !important;
@@ -409,6 +418,7 @@ cd-login-password-form {
 
 .nav-tabs {
   @extend .pf-c-tabs;
+
   border-bottom: 0 !important;
 }
 
@@ -500,6 +510,7 @@ cd-notifications-sidebar {
 .dropdown {
   .btn-light {
     @extend .pf-c-button, .pf-m-control;
+
     border-radius: unset !important;
   }
 }
@@ -522,15 +533,17 @@ cd-card-row {
   }
 }
 
-/* Forms, Tables, Buttons and all minor UI Elements*/
+/* Forms, Tables, Buttons and all minor UI Elements */
 .btn {
   @extend .pf-c-button;
+
   box-sizing: border-box !important;
   font-size: 0.8rem !important;
 }
 
 .btn-submit {
   @extend .pf-c-button, .pf-m-primary, .pf-m-block;
+
   padding-top: 30px;
 }
 
@@ -544,6 +557,7 @@ cd-card-row {
 
 .input-group {
   @extend .pf-c-input-group;
+
   background-color: transparent !important;
 }
 
@@ -556,14 +570,13 @@ cd-about {
     --bs-gutter-y: 10px !important;
   }
 
-  .cds--modal-container  {
+  .cds--modal-container {
     background: url('/assets/redhat_new_background.svg') no-repeat !important;
     background-position: left bottom !important;
     font-size: 1rem;
     margin-left: -10rem;
     text-shadow: none !important;
     width: 70rem !important;
-
 
     .cds--modal-close {
       background-color: transparent !important;
@@ -594,6 +607,7 @@ cd-about {
 
     h3 {
       @extend .pf-c-title, .pf-m-4xl;
+
       margin-bottom: 5rem !important;
       visibility: hidden;
 
@@ -684,6 +698,7 @@ cd-about {
 .btn-accent,
 .btn-accent.dropdown-toggle {
   @extend .pf-c-button, .pf-m-primary;
+
   background-color: vv.$primary !important;
   border: 1px transparent !important;
   border-bottom: 2px solid transparent !important;
@@ -691,8 +706,8 @@ cd-about {
   &:hover,
   &:focus,
   &.focus,
-  &:not(:disabled):not(.disabled):active,
-  &:not(:disabled):not(.disabled).active {
+  &:not(:disabled, .disabled):active,
+  &:not(:disabled, .disabled).active {
     background-color: vv.$secondary !important;
   }
 
@@ -752,6 +767,7 @@ cd-about {
 
 .form-control {
   @extend .pf-c-form-control;
+
   border-bottom: 1px solid vv.$btn-border-bottom;
   border-radius: unset !important;
   font-size: 0.8rem !important;
@@ -788,6 +804,7 @@ cd-about {
 .dataTables_paginate {
   .form-control {
     @extend .pf-c-form-control;
+
     padding-bottom: 5px !important;
 
     &:hover {
@@ -827,7 +844,7 @@ cd-table {
     }
 
     tr.cds--parent-row.cds--expandable-row:hover td,
-    tr.cds--parent-row.cds--expandable-row:hover+tr[data-child-row] td {
+    tr.cds--parent-row.cds--expandable-row:hover + tr[data-child-row] td {
       background-color: vv.$white !important;
     }
   }
@@ -851,6 +868,7 @@ cd-table {
 
     .cds--search.cds--toolbar-search-container-persistent .cds--search-input {
       @extend .pf-c-form-control;
+
       border: 0 !important;
       border-bottom: 1px solid vv.$btn-border-bottom !important;
       border-radius: 0 !important;
@@ -1012,9 +1030,10 @@ textarea.form-control {
   height: 31px !important;
 }
 
-/*Badge and Labels. */
+/* Badge and Labels. */
 .badge {
   @extend .pf-c-label, .pf-m-compact;
+
   border-radius: 30em !important;
   font-size: 0.8rem !important;
   font-weight: 400 !important;
@@ -1147,6 +1166,7 @@ cd-prometheus-form {
 
 .cd-col-form-label {
   @extend .pf-c-form__label;
+
   font-weight: bold !important;
   text-align: left !important;
 }
@@ -1262,5 +1282,14 @@ cd-dashboard-v3 {
 cd-upgrade {
   .btn-accent:disabled {
     color: vv.$white !important;
+  }
+}
+
+cd-table-actions.btn-group.multisite-actions cds-overflow-menu .cds--btn--icon-only {
+  top: 0 !important;
+
+  .cds--btn.cds--btn--tertiary {
+    height: layout.rem(40px);
+    min-block-size: 0% !important;
   }
 }
