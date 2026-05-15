@@ -179,7 +179,10 @@ export const ICON_TYPE = {
   clusterIcon: 'web-services--cluster',
   download: 'download',
   cloudMonitoring: 'cloud--monitoring',
-  arrowRight: 'arrow--right'
+  arrowRight: 'arrow--right',
+  trash: 'trash-can',
+  replicate: 'replicate',
+  share: 'share'
 } as const;
 
 export const EMPTY_STATE_IMAGE = {
