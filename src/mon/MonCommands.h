@@ -784,7 +784,7 @@ COMMAND("osd crush rule create-stretch-replicated "
 	"name=root,type=CephString,req=false,goodchars=[A-Za-z0-9-_.] "
 	"name=zone_failure_domain,type=CephString,req=false,goodchars=[A-Za-z0-9-_.] "
 	"name=osd_failure_domain,type=CephString,req=false,goodchars=[A-Za-z0-9-_.] "
-	"name=zones,type=CephInt,range=0,req=false "
+	"name=num_zones,type=CephInt,range=1,req=false "
 	"name=num_replica_per_zone,type=CephInt,range=0,req=false "
 	"name=force,type=CephBool,req=false "
 	"name=class,type=CephString,goodchars=" CLASS_GOODCHARS ",req=false",
@@ -793,7 +793,7 @@ COMMAND("osd crush rule create-stretch-replicated "
 COMMAND("osd crush rule create-erasure "
 	"name=name,type=CephString,goodchars=[A-Za-z0-9-_.] "
 	"name=profile,type=CephString,req=false,goodchars=[A-Za-z0-9-_.=] "
-	"name=zones,type=CephInt,range=0,req=false",
+	"name=num_zones,type=CephInt,range=1,req=false",
 	"create crush rule <name> for erasure coded pool created with <profile> (default default)",
 	"osd", "rw")
 COMMAND("osd crush rule rm "
