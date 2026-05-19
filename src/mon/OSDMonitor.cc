@@ -7828,6 +7828,7 @@ int OSDMonitor::parse_erasure_code_profile(const vector<string> &erasure_code_pr
 
 int OSDMonitor::prepare_pool_size(const unsigned pool_type,
 				  const string &erasure_code_profile,
+          int num_zones,
                                   uint8_t repl_size,
 				  unsigned *size, unsigned *min_size,
 				  ostream *ss)
@@ -7864,20 +7865,7 @@ int OSDMonitor::prepare_pool_size(const unsigned pool_type,
       err = get_erasure_code(erasure_code_profile, &erasure_code, ss);
       if (err == 0) {
  unsigned base_size = erasure_code->get_chunk_count();
- 
- // Get num_zones from the EC profile, default to 1
- ErasureCodeProfile profile = osdmap.get_erasure_code_profile(erasure_code_profile);
- int num_zones = 1;
- auto it = profile.find("num_zones");
- if (it != profile.end()) {
-   std::string err_str;
-   num_zones = strict_strtol(it->second.c_str(), 10, &err_str);
-   if (!err_str.empty() || num_zones < 1) {
-     *ss << "invalid num_zones value in erasure code profile: " << it->second;
-     return -EINVAL;
-   }
- }
- 
+
  *size = num_zones * base_size;
  *min_size =
    erasure_code->get_data_chunk_count() +
@@ -8293,7 +8281,7 @@ int OSDMonitor::prepare_new_pool(string& name,
   }
 
   unsigned size, min_size;
-  r = prepare_pool_size(pool_type, erasure_code_profile, repl_size,
+  r = prepare_pool_size(pool_type, erasure_code_profile, num_zones, repl_size,
                         &size, &min_size, ss);
   if (r) {
     dout(10) << "prepare_pool_size returns " << r << dendl;
@@ -9632,12 +9620,24 @@ int OSDMonitor::prepare_command_pool_stretch_set(const cmdmap_t& cmdmap,
     return -EINVAL;
   }
 
+  // Validate the new crush rule is compatible with stretch mode
+  if (osdmap.stretch_mode_enabled) {
+    int r = validate_stretch_mode_new_pool(crush_rule, bucket_barrier_str, &ss);
+    if (r < 0) {
+      return r;
+    }
+  }
+
   p.peering_crush_bucket_count = static_cast<uint32_t>(bucket_count);
   p.peering_crush_bucket_target = static_cast<uint32_t>(bucket_target);
   p.peering_crush_bucket_barrier = static_cast<uint32_t>(bucket_barrier);
   p.crush_rule = static_cast<__u8>(crush_rule);
-  p.size = static_cast<__u8>(pool_size);
-  p.min_size = static_cast<__u8>(pool_min_size);
+  if (p.is_erasure()) {
+    p.size = p.size * bucket_count;
+  } else if (p.is_replicated()){
+    p.size = static_cast<__u8>(pool_size);
+    p.min_size = static_cast<__u8>(pool_min_size);
+  }
   p.last_change = pending_inc.epoch;
   pending_inc.new_pools[pool] = p;
   ss << "pool " << pool_name << " stretch values are set successfully";
@@ -9664,7 +9664,7 @@ int OSDMonitor::prepare_command_pool_stretch_unset(const cmdmap_t& cmdmap,
   pg_pool_t p = *osdmap.get_pg_pool(pool);
   if (pending_inc.new_pools.count(pool))
     p = pending_inc.new_pools[pool];
-  
+
   // check if pool is a stretch pool
   if (!p.is_stretch_pool()) {
     ss << "pool " << pool_name << " is not a stretch pool";
