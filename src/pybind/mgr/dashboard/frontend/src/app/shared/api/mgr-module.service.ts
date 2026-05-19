@@ -13,6 +13,7 @@ import { SummaryService } from '../services/summary.service';
 
 const GLOBAL = 'global';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { ModalCdsService } from '../services/modal-cds.service';
 
 /** Modules that require --force when not all mgr daemons support them. */
 const FORCE_ENABLE_MODULES = new Set(['feedback']);
@@ -100,7 +101,7 @@ export class MgrModuleService {
     navigateByUrl?: boolean,
     reconnectingMessage: string = $localize`Reconnecting, please wait ...`,
     force: boolean = false,
-    activeModal?: NgbActiveModal
+    activeModal?: NgbActiveModal | ModalCdsService
   ): void {
     const moduleToggle$ = enabled ? this.disable(module) : this.enable(module, force);
 
@@ -136,7 +137,11 @@ export class MgrModuleService {
                 table.refreshBtn();
               }
 
-              if (activeModal) activeModal.close();
+              if (activeModal && 'close' in activeModal) {
+                activeModal.close();
+              } else if (activeModal && 'dismissAll' in activeModal) {
+                activeModal.dismissAll();
+              }
 
               if (notificationText) {
                 this.notificationService.show(
