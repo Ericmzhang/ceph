@@ -16129,7 +16129,9 @@ void OSDMonitor::trigger_degraded_stretch_mode(const set<int>& dead_buckets,
       pg_pool_t& newp = *pending_inc.get_new_pool(pgi.first, &pgi.second);
       newp.peering_crush_bucket_count = new_site_count;
       newp.peering_crush_mandatory_member = remaining_site;
-      newp.min_size = pgi.second.min_size / 2; // only support 2 zones now
+      if (pgi.second.is_replicated()) {
+        newp.min_size = pgi.second.min_size / 2; // only support 2 zones now
+      }
       newp.set_last_force_op_resend(pending_inc.epoch);
     }
   }
@@ -16235,7 +16237,9 @@ void OSDMonitor::trigger_healthy_stretch_mode()
       pg_pool_t& newp = *pending_inc.get_new_pool(pgi.first, &pgi.second);
       newp.peering_crush_bucket_count = osdmap.stretch_bucket_count;
       newp.peering_crush_mandatory_member = CRUSH_ITEM_NONE;
-      newp.min_size = g_conf().get_val<uint64_t>("mon_stretch_pool_min_size");
+      if (pgi.second.is_replicated()) {
+        newp.min_size = g_conf().get_val<uint64_t>("mon_stretch_pool_min_size");
+      }
       newp.set_last_force_op_resend(pending_inc.epoch);
     }
   }
