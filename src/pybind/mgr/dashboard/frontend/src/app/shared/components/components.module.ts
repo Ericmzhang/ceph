@@ -95,7 +95,6 @@ import { ToastComponent } from './notification-toast/notification-toast.componen
 import { TearsheetComponent } from './tearsheet/tearsheet.component';
 
 // Icons
-import InfoIcon from '@carbon/icons/es/information/16';
 import CopyIcon from '@carbon/icons/es/copy/32';
 import downloadIcon from '@carbon/icons/es/download/16';
 import CheckmarkFilledIcon from '@carbon/icons/es/checkmark--filled/16';
