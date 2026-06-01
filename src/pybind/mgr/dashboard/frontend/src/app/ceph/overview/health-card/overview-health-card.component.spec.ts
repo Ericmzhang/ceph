@@ -3,7 +3,6 @@ import { of } from 'rxjs';
 
 import { OverviewHealthCardComponent } from './overview-health-card.component';
 import { SummaryService } from '~/app/shared/services/summary.service';
-import { UpgradeService } from '~/app/shared/api/upgrade.service';
 import { provideRouter, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { SkeletonModule, ButtonModule, LinkModule } from 'carbon-components-angular';
@@ -24,10 +23,6 @@ describe('OverviewStorageCardComponent (Jest)', () => {
       version:
         'ceph version 13.1.0-419-g251e2515b5 (251e2515b563856349498c6caf34e7a282f62937) nautilus (dev)'
     })
-  };
-
-  const upgradeServiceMock = {
-    listCached: jest.fn(() => of({ versions: [] }))
   };
 
   const mockAuthStorageService = {
@@ -61,7 +56,6 @@ describe('OverviewStorageCardComponent (Jest)', () => {
       ],
       providers: [
         { provide: SummaryService, useValue: summaryServiceMock },
-        { provide: UpgradeService, useValue: upgradeServiceMock },
         { provide: AuthStorageService, useValue: mockAuthStorageService },
         { provide: MgrModuleService, useValue: mockMgrModuleService },
         { provide: HardwareService, useValue: mockHardwareService },

@@ -20,11 +20,9 @@ import { RouterModule } from '@angular/router';
 import { ComponentsModule } from '~/app/shared/components/components.module';
 import { SummaryService } from '~/app/shared/services/summary.service';
 import { Summary } from '~/app/shared/models/summary.model';
-import { combineLatest, Observable, of } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { PipesModule } from '~/app/shared/pipes/pipes.module';
-import { UpgradeInfoInterface } from '~/app/shared/models/upgrade.interface';
-import { UpgradeService } from '~/app/shared/api/upgrade.service';
 import { catchError, filter, map, shareReplay, startWith, switchMap } from 'rxjs/operators';
 import { HealthCardTabSection, HealthCardVM } from '~/app/shared/models/overview';
 import { HardwareService } from '~/app/shared/api/hardware.service';
@@ -37,11 +35,6 @@ import { GaugeChartComponent } from '@carbon/charts-angular';
 import { CallHomeService } from '~/app/shared/api/call-home.service';
 import { StorageInsightsService } from '~/app/shared/api/storage-insights.service';
 import { environment } from '~/environments/environment';
-
-type OverviewHealthData = {
-  summary: Summary;
-  upgrade: UpgradeInfoInterface | null;
-};
 
 interface HealthItemConfig {
   key: 'mon' | 'mgr' | 'osd' | 'hosts';
@@ -84,7 +77,6 @@ type HwRowVM = {
 export class OverviewHealthCardComponent {
   environment = environment;
   private readonly summaryService = inject(SummaryService);
-  private readonly upgradeService = inject(UpgradeService);
   private readonly healthService = inject(HealthService);
   private readonly hardwareService = inject(HardwareService);
   private readonly mgrModuleService = inject(MgrModuleService);
@@ -123,15 +115,7 @@ export class OverviewHealthCardComponent {
 
   private readonly permissions = this.authStorageService.getPermissions();
 
-  readonly data$: Observable<OverviewHealthData> = combineLatest([
-    this.summaryService.summaryData$.pipe(filter((summary): summary is Summary => !!summary)),
-    this.permissions?.configOpt?.read
-      ? this.upgradeService.listCached().pipe(
-          startWith(null as UpgradeInfoInterface | null),
-          catchError(() => of(null))
-        )
-      : of(null)
-  ]).pipe(map(([summary, upgrade]) => ({ summary, upgrade })));
+  readonly summary$: Observable<Summary> = this.summaryService.summaryData$.pipe(filter((summary): summary is Summary => !!summary));
 
   readonly enabled$: Observable<boolean> = this.permissions?.configOpt?.read
     ? this.mgrModuleService.getConfig('cephadm').pipe(
