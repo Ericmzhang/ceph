@@ -150,6 +150,7 @@ import { CallHomeConnectivityStatusComponent } from './call-home-connectivity-st
 @NgModule({
   imports: [
     CommonModule,
+    ProductiveCardComponent,
     FormsModule,
     ReactiveFormsModule,
     NgbAlertModule,
