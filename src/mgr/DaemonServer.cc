@@ -3233,7 +3233,29 @@ void DaemonServer::send_report()
   m->gid = monc->get_global_id();
   py_modules.get_health_checks(&m->health_checks);
   py_modules.get_progress_events(&m->progress_events);
-
+  if (!pools_blocked_by_merge_threshold.empty()) {
+    std::ostringstream ss;
+    ss << pools_blocked_by_merge_threshold.size() 
+      << " pool(s) have pg merging blocked since trhey will take too long";
+    
+    auto& check = m->health_checks.add(
+      "PG_MERGE_BLOCKED_BY_SIZE",
+      HEALTH_WARN,
+      ss.str(),
+      pools_blocked_by_merge_threshold.size()
+    );
+    
+    cluster_state.with_osdmap([&](const OSDMap& osdmap) {
+      for (auto pool_id : pools_blocked_by_merge_threshold) {
+        std::ostringstream detail;
+        detail << "pool '" << osdmap.get_pool_name(pool_id) 
+              << "' (id " << pool_id << ") merge blocked: "
+              << pool_merge_bytes[pool_id] << " bytes exceeds limit "
+              << 0.5;
+        check.detail.push_back(detail.str());
+      }
+    });
+  }
   cluster_state.with_mutable_pgmap([&](PGMap& pg_map) {
       cluster_state.update_delta_stats();
 
@@ -3365,7 +3387,56 @@ void DaemonServer::adjust_pgs()
 	    // pg_num decrease (merge)
 	    pg_t merge_source(p.get_pg_num() - 1, i.first);
 	    pg_t merge_target = merge_source.get_parent();
+
+      if(pool_merge_target.find(i.first) != pool_merge_target.end() 
+        && pool_merge_target[i.first] != p.get_pg_num_target()) {
+          pool_merge_bytes.erase(i.first);
+      }
+      pool_merge_target[i.first] = p.get_pg_num_target();
+
+      int64_t total_merge_bytes = 0;
+      pool_stat_t pool_stats = pg_map.get_pg_pool_sum_stat(i.first);
+      int64_t num_bytes_capacity_in_pool = pool_stats.stats.sum.num_bytes;
+
+      if (pool_merge_bytes.find(i.first) == pool_merge_bytes.end()) {
+        dout(10) << "pool " << i.first 
+                << " calculating total merge bytes from pg_num " 
+                << p.get_pg_num() << " to target " << p.get_pg_num_target() 
+                << dendl;
+        
+        for (unsigned ps = p.get_pg_num_target(); ps < p.get_pg_num(); ++ps) {
+          pg_t pg(ps, i.first);
+          auto q = pg_map.pg_stat.find(pg);
+          if (q != pg_map.pg_stat.end()) {
+            int64_t pg_bytes = q->second.stats.sum.num_bytes;
+            unsigned merge_count = 0;
+            pg_t current = pg;
+            while (current.ps() >= p.get_pg_num_target()) {
+              ++merge_count;
+              current = current.get_parent();
+            }
+            dout(10) << "pool " << i.first << " pg " << ps << " bytes " << pg_bytes << " will be merged " << merge_count << " times " << dendl;
+            total_merge_bytes += pg_bytes * merge_count;
+          }
+        }
+        pool_merge_bytes[i.first] = total_merge_bytes;
+      } else {
+        total_merge_bytes = pool_merge_bytes[i.first];
+      }
+
+      double merge_ratio = total_merge_bytes / double(num_bytes_capacity_in_pool);
+      dout(10) << "pool " << i.first 
+        << " total merge bytes: " << total_merge_bytes << " capacity bytes: " 
+        << num_bytes_capacity_in_pool << " merge_ratio: " << merge_ratio << dendl;
 	    bool ok = true;
+
+      if (merge_ratio > 0.5) {
+          pools_blocked_by_merge_threshold.insert(i.first);
+          dout(10) << "pool " << i.first
+            << " blocking merge: " << total_merge_bytes 
+            << " bytes exceeds limit " << 0.5 << dendl;
+          continue;
+      }
 
 	    if (p.get_pg_num() != p.get_pg_num_pending()) {
 	      dout(10) << "pool " << i.first
@@ -3489,6 +3560,12 @@ void DaemonServer::adjust_pgs()
 	    }
 	  }
 	}
+
+  if (p.get_pg_num() == p.get_pg_num_target()) {
+    pool_merge_target.erase(i.first);
+    pool_merge_bytes.erase(i.first);
+    pools_blocked_by_merge_threshold.erase(i.first);
+  }
 
 	// adjust pgp_num?
 	unsigned target = std::min(p.get_pg_num_pending(),

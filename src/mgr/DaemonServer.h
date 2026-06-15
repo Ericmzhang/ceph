@@ -250,6 +250,10 @@ private:
   void maybe_adjust_stats_period();
   void schedule_tick_locked(double delay_sec);
 
+  std::map<int64_t, int64_t> pool_merge_bytes;
+  std::map<int64_t, int64_t> pool_merge_target;
+  std::set<int64_t> pools_blocked_by_merge_threshold;
+
   class OSDPerfMetricCollectorListener : public MetricListener {
   public:
     OSDPerfMetricCollectorListener(DaemonServer *server)
