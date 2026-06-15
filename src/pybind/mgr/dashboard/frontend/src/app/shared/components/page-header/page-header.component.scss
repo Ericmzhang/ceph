@@ -14,4 +14,14 @@ cd-page-header {
   .border-top {
     border-top: 1px solid var(--cds-border-subtle-01);
   }
+
+  // Carbon tile padding has no API to drop only the bottom edge so tabs sit flush.
+  .cd-page-header__tile--tabs {
+    padding-bottom: 0;
+  }
+
+  // Carbon tabs have no offset API to line up with the page title.
+  .cd-page-header__tabs {
+    margin-inline-start: calc(-1 * var(--cds-layout-density-padding-inline-local, 1rem));
+  }
 }
