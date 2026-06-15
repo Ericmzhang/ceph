@@ -3236,7 +3236,7 @@ void DaemonServer::send_report()
   if (!pools_blocked_by_merge_threshold.empty()) {
     std::ostringstream ss;
     ss << pools_blocked_by_merge_threshold.size() 
-      << " pool(s) have pg merging blocked since trhey will take too long";
+      << " pool(s) have pg merging blocked since they will take too long";
     
     auto& check = m->health_checks.add(
       "PG_MERGE_BLOCKED_BY_SIZE",
