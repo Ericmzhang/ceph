@@ -3456,7 +3456,7 @@ void DaemonServer::adjust_pgs()
       int64_t total_merge_bytes = 0;
       pool_stat_t pool_stats = pg_map.get_pg_pool_sum_stat(i.first);
       int64_t num_bytes_capacity_in_pool = pool_stats.stats.sum.num_bytes;
-      unsigned merge_count = 0;
+      unsigned max_merge_count = 0;;
       if (pool_merge_bytes.find(i.first) == pool_merge_bytes.end()) {
         dout(10) << "pool " << i.first 
                 << " calculating total merge bytes from pg_num " 
@@ -3466,9 +3466,9 @@ void DaemonServer::adjust_pgs()
         for (unsigned ps = p.get_pg_num_target(); ps < p.get_pg_num(); ++ps) {
           pg_t pg(ps, i.first);
           auto q = pg_map.pg_stat.find(pg);
+          unsigned merge_count = 0;
           if (q != pg_map.pg_stat.end()) {
             int64_t pg_bytes = q->second.stats.sum.num_bytes;
-            
             pg_t current = pg;
             while (current.ps() >= p.get_pg_num_target()) {
               ++merge_count;
@@ -3478,18 +3478,19 @@ void DaemonServer::adjust_pgs()
             dout(10) << "pool " << i.first << " pg " << ps << " bytes " << pg_bytes << " will be merged " << merge_count << " times " << dendl;
             total_merge_bytes += pg_bytes * merge_count;
           }
+          max_merge_count = std::max(pool_merge_max_count[i.first], merge_count);
         }
         pool_merge_bytes[i.first] = total_merge_bytes;
-        pool_merge_max_count[i.first] = std::max(pool_merge_max_count[i.first], merge_count);
+        pool_merge_max_count[i.first] = max_merge_count;
       } else {
         total_merge_bytes = pool_merge_bytes[i.first];
-        merge_count = pool_merge_max_count[i.first];
+        max_merge_count = pool_merge_max_count[i.first];
       }
 
-      double merge_ratio = total_merge_bytes / double(merge_count * num_bytes_capacity_in_pool);
+      double merge_ratio = total_merge_bytes / double(max_merge_count * num_bytes_capacity_in_pool);
       dout(10) << "pool " << i.first 
         << " total merge bytes: " << total_merge_bytes << " capacity bytes: " 
-        << merge_count * num_bytes_capacity_in_pool << " merge count: " << merge_count << " merge_ratio: " << merge_ratio << dendl;
+        << max_merge_count * num_bytes_capacity_in_pool << " merge count: " << max_merge_count << " merge_ratio: " << merge_ratio << dendl;
 	    bool ok = true;
 
       if (merge_ratio > 1.0) {
