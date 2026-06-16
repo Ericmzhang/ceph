@@ -269,6 +269,10 @@ int DaemonServer::init(uint64_t gid, entity_addrvec_t client_addrs)
              asok_hook,
              "show slowest recent ops, sorted by duration");
   ceph_assert(r == 0);
+  r = admin_socket->register_command("dump_merge_throughput",
+                                   asok_hook,
+                                   "show last completed merge throughput per pool");
+  ceph_assert(r == 0);
   return 0;
 }
 
@@ -3236,7 +3240,7 @@ void DaemonServer::send_report()
   if (!pools_blocked_by_merge_threshold.empty()) {
     std::ostringstream ss;
     ss << pools_blocked_by_merge_threshold.size() 
-      << " pool(s) have pg merging blocked since trhey will take too long";
+      << " pool(s) have pg merging blocked since they will take too long";
     
     auto& check = m->health_checks.add(
       "PG_MERGE_BLOCKED_BY_SIZE",
@@ -3327,6 +3331,60 @@ void DaemonServer::send_report()
 void DaemonServer::adjust_pgs()
 {
   dout(20) << dendl;
+  cluster_state.with_osdmap_and_pgmap([&](const OSDMap& osdmap, const PGMap& pg_map) {
+    for (auto it = pool_current_merge_step.begin(); 
+        it != pool_current_merge_step.end(); ) {
+      int64_t pool_id = it->first;
+      auto& step_info = it->second;
+      
+      auto pool = osdmap.get_pg_pool(pool_id);
+      if (!pool) {
+        it = pool_current_merge_step.erase(it);
+        continue;
+      }
+      
+      // Check if pg_num has decremented (this merge step completed)
+      if (pool->get_pg_num() < step_info.pg_num_before) {
+        // This merge step completed! Calculate throughput
+        utime_t now = ceph_clock_now();
+        double elapsed_sec = (now - step_info.start_time).to_msec() / 1000.0;
+        
+        if (elapsed_sec > 0 && step_info.bytes_in_source_pg > 0) {
+          double throughput_mbps = (step_info.bytes_in_source_pg / elapsed_sec) 
+                                  / (1024.0 * 1024.0);
+          
+          // Update running average
+          pool_merge_throughput_sum[pool_id] += throughput_mbps;
+          pool_merge_step_count[pool_id]++;
+
+          // Track total bytes merged
+          pool_total_bytes_merged[pool_id] += step_info.bytes_in_source_pg; 
+          
+          double avg_throughput = pool_merge_throughput_sum[pool_id] / 
+                                pool_merge_step_count[pool_id];
+          
+          // Store running average
+          pool_current_merge_throughput_mbps[pool_id] = avg_throughput;
+          
+          dout(10) << "pool " << pool_id 
+                  << " merge step COMPLETE: pg_num " << step_info.pg_num_before
+                  << " -> " << pool->get_pg_num()
+                  << " time=" << elapsed_sec << "s"
+                  << " bytes=" << step_info.bytes_in_source_pg
+                  << " step_throughput=" << throughput_mbps << " MB/s"
+                  << " total_merged=" << pool_total_bytes_merged[pool_id] 
+                  << " avg_throughput=" << avg_throughput << " MB/s"
+                  << " (step " << pool_merge_step_count[pool_id] << ")"
+                  << dendl;
+        }
+        
+        // Remove this step info
+        it = pool_current_merge_step.erase(it);
+      } else {
+        ++it;
+      }
+    }
+  });
   uint64_t max = std::max<uint64_t>(
     1,
     g_conf().get_val<uint64_t>("mgr_max_pg_creating"));
@@ -3397,7 +3455,7 @@ void DaemonServer::adjust_pgs()
       int64_t total_merge_bytes = 0;
       pool_stat_t pool_stats = pg_map.get_pg_pool_sum_stat(i.first);
       int64_t num_bytes_capacity_in_pool = pool_stats.stats.sum.num_bytes;
-
+      unsigned max_merge_count = 1;
       if (pool_merge_bytes.find(i.first) == pool_merge_bytes.end()) {
         dout(10) << "pool " << i.first 
                 << " calculating total merge bytes from pg_num " 
@@ -3415,6 +3473,7 @@ void DaemonServer::adjust_pgs()
               ++merge_count;
               current = current.get_parent();
             }
+            max_merge_count = std::max(max_merge_count, merge_count);
             dout(10) << "pool " << i.first << " pg " << ps << " bytes " << pg_bytes << " will be merged " << merge_count << " times " << dendl;
             total_merge_bytes += pg_bytes * merge_count;
           }
@@ -3424,13 +3483,13 @@ void DaemonServer::adjust_pgs()
         total_merge_bytes = pool_merge_bytes[i.first];
       }
 
-      double merge_ratio = total_merge_bytes / double(num_bytes_capacity_in_pool);
+      double merge_ratio = total_merge_bytes / double(max_merge_count * num_bytes_capacity_in_pool);
       dout(10) << "pool " << i.first 
         << " total merge bytes: " << total_merge_bytes << " capacity bytes: " 
-        << num_bytes_capacity_in_pool << " merge_ratio: " << merge_ratio << dendl;
+        << max_merge_count * num_bytes_capacity_in_pool << " merge_ratio: " << merge_ratio << dendl;
 	    bool ok = true;
 
-      if (merge_ratio > 0.5) {
+      if (merge_ratio > 1.0) {
           pools_blocked_by_merge_threshold.insert(i.first);
           dout(10) << "pool " << i.first
             << " blocking merge: " << total_merge_bytes 
@@ -3512,7 +3571,33 @@ void DaemonServer::adjust_pgs()
 		       << " and " << merge_target
 		       << ")" << dendl;
 	      pg_num_to_set[osdmap.get_pool_name(i.first)] = target;
-              continue;
+        merge_step_info_t step_info;
+        step_info.start_time = ceph_clock_now();
+        step_info.pg_num_before = p.get_pg_num();
+
+        // Calculate bytes in the source PG being merged
+        pg_t source_pg(p.get_pg_num() - 1, i.first);
+        auto pg_stat_it = pg_map.pg_stat.find(source_pg);
+        if (pg_stat_it != pg_map.pg_stat.end()) {
+          step_info.bytes_in_source_pg = pg_stat_it->second.stats.sum.num_bytes;
+        } else {
+          step_info.bytes_in_source_pg = 0;
+        }
+
+        pool_current_merge_step[i.first] = step_info;
+
+        // Initialize running average tracking on first merge
+        if (pool_merge_step_count.find(i.first) == pool_merge_step_count.end()) {
+          pool_merge_throughput_sum[i.first] = 0.0;
+          pool_merge_step_count[i.first] = 0;
+        }
+
+        dout(10) << "pool " << i.first 
+                << " merge step START: pg_num " << p.get_pg_num() 
+                << " -> " << target
+                << " (merging PG " << source_pg 
+                << " with " << step_info.bytes_in_source_pg << " bytes)"
+                << dendl;
 	    }
 	  } else if (p.get_pg_num_target() > p.get_pg_num()) {
 	    // pg_num increase (split)
@@ -3562,9 +3647,26 @@ void DaemonServer::adjust_pgs()
 	}
 
   if (p.get_pg_num() == p.get_pg_num_target()) {
+    // Log final average throughput
+    auto tp_it = pool_current_merge_throughput_mbps.find(i.first);
+    auto count_it = pool_merge_step_count.find(i.first);
+    if (tp_it != pool_current_merge_throughput_mbps.end() && 
+        count_it != pool_merge_step_count.end()) {
+      dout(10) << "pool " << i.first << " merge sequence COMPLETE"
+              << " total_steps=" << count_it->second
+              << " avg_throughput=" << tp_it->second << " MB/s"
+              << dendl;
+    }
+    
+    // Clean up all tracking data
     pool_merge_target.erase(i.first);
     pool_merge_bytes.erase(i.first);
     pools_blocked_by_merge_threshold.erase(i.first);
+    pool_current_merge_step.erase(i.first);
+    pool_current_merge_throughput_mbps.erase(i.first);
+    pool_merge_throughput_sum.erase(i.first);
+    pool_merge_step_count.erase(i.first);
+    pool_total_bytes_merged.erase(i.first); 
   }
 
 	// adjust pgp_num?
@@ -3934,8 +4036,67 @@ will start to track new ops received afterwards.";
         ret = -EINVAL;
         goto out;
       }
+    } 
+  } else if (admin_command == "dump_merge_throughput") {
+  f->open_object_section("merge_throughput");
+  
+  cluster_state.with_osdmap_and_pgmap([&](const OSDMap& osdmap, const PGMap& pg_map) {
+    // Iterate through all pools with current throughput
+    std::set<int64_t> all_pools;
+    for (auto& [pool_id, _] : pool_current_merge_throughput_mbps) {
+      all_pools.insert(pool_id);
     }
-  }
+    for (auto& [pool_id, _] : pool_current_merge_step) {
+      all_pools.insert(pool_id);
+    }
+    
+    for (int64_t pool_id : all_pools) {
+      auto pool_name = osdmap.get_pool_name(pool_id);
+      auto pool = osdmap.get_pg_pool(pool_id);
+      
+      if (!pool) continue;
+      
+      f->open_object_section(pool_name.c_str());
+      f->dump_int("pool_id", pool_id);
+      f->dump_unsigned("current_pg_num", pool->get_pg_num());
+      f->dump_unsigned("target_pg_num", pool->get_pg_num_target());
+
+      // Running average throughput
+      auto tp_it = pool_current_merge_throughput_mbps.find(pool_id);
+      if (tp_it != pool_current_merge_throughput_mbps.end()) {
+        f->dump_float("avg_throughput_mbps", tp_it->second);
+        
+        // Also show step count
+        auto count_it = pool_merge_step_count.find(pool_id);
+        if (count_it != pool_merge_step_count.end()) {
+          f->dump_unsigned("completed_merge_steps", count_it->second);
+        }
+
+        auto bytes_it = pool_total_bytes_merged.find(pool_id);
+        if (bytes_it != pool_total_bytes_merged.end()) {
+          f->dump_int("total_bytes_merged", bytes_it->second);
+          f->dump_float("total_gb_merged", bytes_it->second / (1024.0 * 1024.0 * 1024.0));
+        }
+      }
+
+      // Current merge step in progress
+      auto step_it = pool_current_merge_step.find(pool_id);
+      if (step_it != pool_current_merge_step.end()) {
+        f->dump_bool("merge_in_progress", true);
+        f->dump_unsigned("merging_from_pg_num", step_it->second.pg_num_before);
+        double elapsed = (ceph_clock_now() - step_it->second.start_time).to_msec() / 1000.0;
+        f->dump_float("current_merge_elapsed_seconds", elapsed);
+        f->dump_int("current_merge_bytes", step_it->second.bytes_in_source_pg);
+      } else {
+        f->dump_bool("merge_in_progress", false);
+      }
+
+      f->close_section();
+    }
+  });
+  
+  f->close_section();
+}
   dout(10) << "ret := " << ret << dendl;
   return true;
 

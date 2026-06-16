@@ -250,6 +250,19 @@ private:
   void maybe_adjust_stats_period();
   void schedule_tick_locked(double delay_sec);
 
+  struct merge_step_info_t {
+    utime_t start_time;
+    unsigned pg_num_before;  // pg_num before this merge step
+    int64_t bytes_in_source_pg;  // bytes in the PG being merged
+  };
+
+  std::map<int64_t, merge_step_info_t> pool_current_merge_step;
+  std::map<int64_t, double> pool_current_merge_throughput_mbps; 
+
+  std::map<int64_t, double> pool_merge_throughput_sum;  // Sum of all throughputs
+  std::map<int64_t, unsigned> pool_merge_step_count;    // Number of completed steps
+  std::map<int64_t, int64_t> pool_total_bytes_merged; 
+
   std::map<int64_t, int64_t> pool_merge_bytes;
   std::map<int64_t, int64_t> pool_merge_target;
   std::set<int64_t> pools_blocked_by_merge_threshold;
