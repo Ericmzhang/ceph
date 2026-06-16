@@ -265,6 +265,7 @@ private:
 
   std::map<int64_t, int64_t> pool_merge_bytes;
   std::map<int64_t, int64_t> pool_merge_target;
+  std::map<int64_t, unsigned> pool_merge_max_count; 
   std::set<int64_t> pools_blocked_by_merge_threshold;
 
   class OSDPerfMetricCollectorListener : public MetricListener {

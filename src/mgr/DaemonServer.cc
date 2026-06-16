@@ -3449,13 +3449,14 @@ void DaemonServer::adjust_pgs()
       if(pool_merge_target.find(i.first) != pool_merge_target.end() 
         && pool_merge_target[i.first] != p.get_pg_num_target()) {
           pool_merge_bytes.erase(i.first);
+          pool_merge_max_count.erase(i.first);
       }
       pool_merge_target[i.first] = p.get_pg_num_target();
 
       int64_t total_merge_bytes = 0;
       pool_stat_t pool_stats = pg_map.get_pg_pool_sum_stat(i.first);
       int64_t num_bytes_capacity_in_pool = pool_stats.stats.sum.num_bytes;
-      unsigned max_merge_count = 1;
+      unsigned merge_count = 0;
       if (pool_merge_bytes.find(i.first) == pool_merge_bytes.end()) {
         dout(10) << "pool " << i.first 
                 << " calculating total merge bytes from pg_num " 
@@ -3467,7 +3468,7 @@ void DaemonServer::adjust_pgs()
           auto q = pg_map.pg_stat.find(pg);
           if (q != pg_map.pg_stat.end()) {
             int64_t pg_bytes = q->second.stats.sum.num_bytes;
-            unsigned merge_count = 0;
+            
             pg_t current = pg;
             while (current.ps() >= p.get_pg_num_target()) {
               ++merge_count;
@@ -3479,14 +3480,16 @@ void DaemonServer::adjust_pgs()
           }
         }
         pool_merge_bytes[i.first] = total_merge_bytes;
+        pool_merge_max_count[i.first] = std::max(pool_merge_max_count[i.first], merge_count);
       } else {
         total_merge_bytes = pool_merge_bytes[i.first];
+        merge_count = pool_merge_max_count[i.first];
       }
 
-      double merge_ratio = total_merge_bytes / double(max_merge_count * num_bytes_capacity_in_pool);
+      double merge_ratio = total_merge_bytes / double(merge_count * num_bytes_capacity_in_pool);
       dout(10) << "pool " << i.first 
         << " total merge bytes: " << total_merge_bytes << " capacity bytes: " 
-        << max_merge_count * num_bytes_capacity_in_pool << " merge_ratio: " << merge_ratio << dendl;
+        << merge_count * num_bytes_capacity_in_pool << " merge count: " << merge_count << " merge_ratio: " << merge_ratio << dendl;
 	    bool ok = true;
 
       if (merge_ratio > 1.0) {
@@ -3661,6 +3664,7 @@ void DaemonServer::adjust_pgs()
     // Clean up all tracking data
     pool_merge_target.erase(i.first);
     pool_merge_bytes.erase(i.first);
+    pool_merge_max_count.erase(i.first);
     pools_blocked_by_merge_threshold.erase(i.first);
     pool_current_merge_step.erase(i.first);
     pool_current_merge_throughput_mbps.erase(i.first);
