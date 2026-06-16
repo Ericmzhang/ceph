@@ -3250,7 +3250,7 @@ void DaemonServer::send_report()
         std::ostringstream detail;
         detail << "pool '" << osdmap.get_pool_name(pool_id) 
               << "' (id " << pool_id << ") merge blocked: "
-              << pool_merge_bytes[pool_id] << " bytes exceeds limit "
+              << pool_merge[pool_id].bytes << " bytes exceeds limit "
               << 0.5;
         check.detail.push_back(detail.str());
       }
@@ -3390,16 +3390,14 @@ void DaemonServer::adjust_pgs()
 
       if(pool_merge_target.find(i.first) != pool_merge_target.end() 
         && pool_merge_target[i.first] != p.get_pg_num_target()) {
-          pool_merge_bytes.erase(i.first);
-          pool_merge_max_count.erase(i.first);
+          pool_merge.erase(i.first);
       }
       pool_merge_target[i.first] = p.get_pg_num_target();
 
       int64_t total_merge_bytes = 0;
       pool_stat_t pool_stats = pg_map.get_pg_pool_sum_stat(i.first);
-      int64_t num_bytes_capacity_in_pool = pool_stats.stats.sum.num_bytes;
       unsigned max_merge_count = 0;;
-      if (pool_merge_bytes.find(i.first) == pool_merge_bytes.end()) {
+      if (pool_merge.find(i.first) == pool_merge.end()) {
         dout(10) << "pool " << i.first 
                 << " calculating total merge bytes from pg_num " 
                 << p.get_pg_num() << " to target " << p.get_pg_num_target() 
@@ -3419,19 +3417,20 @@ void DaemonServer::adjust_pgs()
             dout(10) << "pool " << i.first << " pg " << ps << " bytes " << pg_bytes << " will be merged " << merge_count << " times " << dendl;
             total_merge_bytes += pg_bytes * merge_count;
           }
-          max_merge_count = std::max(pool_merge_max_count[i.first], merge_count);
+          max_merge_count = std::max(pool_merge[i.first].max_count, merge_count);
         }
-        pool_merge_bytes[i.first] = total_merge_bytes;
-        pool_merge_max_count[i.first] = max_merge_count;
+        pool_merge[i.first].bytes = total_merge_bytes;
+        pool_merge[i.first].max_count = max_merge_count;
+        pool_merge[i.first].initial_capacity = pool_stats.stats.sum.num_bytes;
       } else {
-        total_merge_bytes = pool_merge_bytes[i.first];
-        max_merge_count = pool_merge_max_count[i.first];
+        total_merge_bytes = pool_merge[i.first].bytes;
+        max_merge_count = pool_merge[i.first].max_count;
       }
 
-      double merge_ratio = total_merge_bytes / double(max_merge_count * num_bytes_capacity_in_pool);
+      double merge_ratio = total_merge_bytes / double(max_merge_count * pool_merge[i.first].initial_capacity );
       dout(10) << "pool " << i.first 
         << " total merge bytes: " << total_merge_bytes << " capacity bytes: " 
-        << max_merge_count * num_bytes_capacity_in_pool << " merge count: " << max_merge_count << " merge_ratio: " << merge_ratio << dendl;
+        << max_merge_count * pool_merge[i.first].initial_capacity  << " merge count: " << max_merge_count << " merge_ratio: " << merge_ratio << dendl;
 	    bool ok = true;
 
       if (merge_ratio > 0.5) {
@@ -3567,8 +3566,7 @@ void DaemonServer::adjust_pgs()
 
   if (p.get_pg_num() == p.get_pg_num_target()) {
     pool_merge_target.erase(i.first);
-    pool_merge_bytes.erase(i.first);
-    pool_merge_max_count.erase(i.first);
+    pool_merge.erase(i.first);
     pools_blocked_by_merge_threshold.erase(i.first);
   }
 
