@@ -855,7 +855,7 @@ prepare_conf() {
         mon osd full ratio = .99
         mon osd nearfull ratio = .99
         mon osd backfillfull ratio = .99
-        mon_max_pg_per_osd = ${MON_MAX_PG_PER_OSD:-1000}
+        mon_max_pg_per_osd = ${MON_MAX_PG_PER_OSD:-10000}
         erasure code dir = $EC_PATH
         plugin dir = $CEPH_LIB
         run dir = $CEPH_OUT_DIR
