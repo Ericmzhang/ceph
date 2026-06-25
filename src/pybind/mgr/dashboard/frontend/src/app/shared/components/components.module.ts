@@ -93,6 +93,7 @@ import { IconComponent } from './icon/icon.component';
 import { DetailsCardComponent } from './details-card/details-card.component';
 import { ToastComponent } from './notification-toast/notification-toast.component';
 import { TearsheetComponent } from './tearsheet/tearsheet.component';
+import { ClickableTileComponent } from './clickable-tile/clickable-tile.component';
 
 // Icons
 import CopyIcon from '@carbon/icons/es/copy/32';
@@ -240,6 +241,7 @@ import { CallHomeConnectivityStatusComponent } from './call-home-connectivity-st
     TearsheetComponent,
     TearsheetStepComponent,
     PageHeaderComponent,
+    ClickableTileComponent,
     SidebarLayoutComponent,
     NumberWithUnitComponent,
     ProductiveCardComponent,
@@ -293,6 +295,7 @@ import { CallHomeConnectivityStatusComponent } from './call-home-connectivity-st
     TearsheetComponent,
     TearsheetStepComponent,
     PageHeaderComponent,
+    ClickableTileComponent,
     SidebarLayoutComponent,
     NumberWithUnitComponent,
     ProductiveCardComponent,

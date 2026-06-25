@@ -67,6 +67,7 @@ import { NotificationsPageComponent } from './core/navigation/notification-panel
 import { CephfsMirroringErrorComponent } from './ceph/cephfs/cephfs-mirroring-error/cephfs-mirroring-error.component';
 import { OverviewComponent } from './ceph/overview/overview.component';
 import { NfsClusterFormComponent } from './ceph/nfs/nfs-cluster-form/nfs-cluster-form.component';
+import { CephfsAddMirroringPathComponent } from './ceph/cephfs/cephfs-add-mirroring-path/cephfs-add-mirroring-path.component';
 import { CephfsMirroringFsTabsComponent } from './ceph/cephfs/cephfs-mirroring-fs-tabs/cephfs-mirroring-fs-tabs.component';
 import { CephfsMirroringFsOverviewComponent } from './ceph/cephfs/cephfs-mirroring-fs-overview/cephfs-mirroring-fs-overview.component';
 import { CephfsMirroringFsMirrorPathsComponent } from './ceph/cephfs/cephfs-mirroring-fs-mirror-paths/cephfs-mirroring-fs-mirror-paths.component';
@@ -461,7 +462,14 @@ const routes: Routes = [
                 data: {
                   breadcrumbs: 'File/Mirroring',
                   pageHeader: CEPHFS_MIRRORING_PAGE_HEADER
-                }
+                },
+                children: [
+                  {
+                    path: 'add-path/:fsId/:fsName',
+                    component: CephfsAddMirroringPathComponent,
+                    outlet: 'modal'
+                  }
+                ]
               },
               {
                 path: ':fsName',
