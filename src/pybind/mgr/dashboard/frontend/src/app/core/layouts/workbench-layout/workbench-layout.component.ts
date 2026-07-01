@@ -41,6 +41,7 @@ export class WorkbenchLayoutComponent implements OnInit, OnDestroy {
   pageHeaderDescription: string | null = null;
   enabledFeature$: Observable<FeatureTogglesMap>;
   pageHeaderHidden = false;
+  enabledFeature$: Observable<FeatureTogglesMap>;
 
   @HostBinding('class') get class(): string {
     return 'top-notification-' + this.notifications.length;
