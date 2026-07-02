@@ -24,13 +24,17 @@ import { Observable, of } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { PipesModule } from '~/app/shared/pipes/pipes.module';
 import { catchError, filter, map, shareReplay, startWith, switchMap } from 'rxjs/operators';
-import { HealthCardTabSection, HealthCardVM } from '~/app/shared/models/overview';
+import {
+  HealthCardTabSection,
+  HealthCardVM,
+  HardwareCardVM,
+  buildHardwareCardVM
+} from '~/app/shared/models/overview';
 import { HardwareService } from '~/app/shared/api/hardware.service';
 import { HealthService } from '~/app/shared/api/health.service';
 import { MgrModuleService } from '~/app/shared/api/mgr-module.service';
 import { RefreshIntervalService } from '~/app/shared/services/refresh-interval.service';
 import { AuthStorageService } from '~/app/shared/services/auth-storage.service';
-import { HardwareNameMapping } from '~/app/shared/enum/hardware.enum';
 import { GaugeChartComponent } from '@carbon/charts-angular';
 import { CallHomeService } from '~/app/shared/api/call-home.service';
 import { StorageInsightsService } from '~/app/shared/api/storage-insights.service';
@@ -42,25 +46,6 @@ interface HealthItemConfig {
   prefix?: string;
   i18n?: boolean;
 }
-
-type HwKey = keyof typeof HardwareNameMapping;
-
-type HwRowVM = {
-  key: HwKey;
-  label: string;
-  icon: string;
-  ok: number;
-  error: number;
-};
-
-const HW_ICON_MAP: Record<HwKey, string> = {
-  memory: 'dataEnrichment',
-  storage: 'vmdkDisk',
-  processors: 'chip',
-  network: 'network1',
-  power: 'plug',
-  fans: 'ibmStreamSets',
-};
 
 @Component({
   selector: 'cd-overview-health-card',
@@ -147,19 +132,8 @@ export class OverviewHealthCardComponent {
     shareReplay({ bufferSize: 1, refCount: true })
   );
 
-  private readonly hardwareRows$: Observable<HwRowVM[] | null> = this.hardwareSummary$.pipe(
-    map((hw) => {
-      const category = hw?.total?.category;
-      if (!category) return null;
-
-      return (Object.keys(HardwareNameMapping) as HwKey[]).map((key) => ({
-        key,
-        label: HardwareNameMapping[key],
-        icon: HW_ICON_MAP[key],
-        ok: Number(category?.[key]?.ok ?? 0),
-        error: Number(category?.[key]?.error ?? 0)
-      }));
-    }),
+  readonly hardwareData$: Observable<HardwareCardVM | null> = this.hardwareSummary$.pipe(
+    map((hw) => buildHardwareCardVM(hw)),
     shareReplay({ bufferSize: 1, refCount: true })
   );
 

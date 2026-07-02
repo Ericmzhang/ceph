@@ -135,6 +135,7 @@ import WebServicesCluster32 from '@carbon/icons/es/web-services--cluster/32';
 import CloudMonitoring16 from '@carbon/icons/es/cloud--monitoring/16';
 import Warning16 from '@carbon/icons/es/warning/16';
 import Deploy16 from '@carbon/icons/es/deploy/16';
+import Temperature16 from '@carbon/icons/es/temperature/16';
 
 import { TearsheetStepComponent } from './tearsheet-step/tearsheet-step.component';
 import { PageHeaderComponent } from './page-header/page-header.component';
@@ -351,7 +352,8 @@ export class ComponentsModule {
       WebServicesCluster32,
       Deploy16,
       Warning16,
-      CloudMonitoring16
+      CloudMonitoring16,
+      Temperature16
     ]);
   }
 }

@@ -127,7 +127,8 @@ export enum Icons {
   locked = 'locked', // Access denied, locked state
   cloudMonitoring = 'cloud--monitoring',
   pendingFilled = 'pending--filled',
-  folder = 'folder'
+  folder = 'folder',
+  temperature = 'temperature'
 }
 
 export enum IconSize {
@@ -189,7 +190,8 @@ export const ICON_TYPE = {
   pendingFilled: 'pending--filled',
   chevronDown: 'chevron--down',
   chevronUp: 'chevron--up',
-  folder: 'folder'
+  folder: 'folder',
+  temperature: 'temperature'
 } as const;
 
 export const EMPTY_STATE_IMAGE = {
