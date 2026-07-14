@@ -1,80 +1,10 @@
-<div
-  [ngClass]="{'empty-body': todayNotifications.length === 0 && previousNotifications.length === 0}"
-  class="notification-area">
-@if (executingTasks.length > 0) {
-<div
-  class="notification-section-heading"
-  i18n>
-  Running tasks
-</div>
-
-@for (task of executingTasks; track task.begin_time) {
-<div class="notification-wrapper">
-  <div class="notification-item task-item">
-    <cd-icon type="infoCircle"></cd-icon>
-
-    <div class="notification-content">
-      <div class="notification-title">
-        {{ task.description }}
-      </div>
-
-      <cds-progress-bar
-        [max]="100"
-        [value]="task.progress || 0"
-        status="active"
-        type="inline"
-        size="small">
-      </cds-progress-bar>
-
-      <div class="task-row">
-        <span class="notification-timestamp">
-          {{ task.begin_time | relativeDate }}
-        </span>
-
-        <span class="task-progress">
-          {{ task.progress || 0 }} %
-        </span>
-      </div>
-    </div>
-  </div>
-
-  <div class="notification-divider"></div>
-</div>
-}
-}
-
-<ng-template
-  #notificationItemTemplate
-  let-notification="notification"
-  let-last="last">
-  <div class="notification-wrapper">
-    <div class="notification-item"
-         data-testid="notification-item">
-      <cd-icon
-        id="notification-icon"
-        [type]="notificationIconMap[notification.type] || notificationIconMap['default']">
-      </cd-icon>
-
-      <div class="notification-content">
-        <div class="notification-timestamp">
-          {{ notification.timestamp | relativeDate }}
-        </div>
-        <div class="notification-title">
-          {{ notification.title }}
-        </div>
-        <div
-          class="notification-message"
-          [innerHTML]="notification.message | sanitizeHtml">
-        </div>
-      </div>
-
-      <button
-        cdsButton="ghost"
-        size="sm"
-        class="notification-close"
-        (click)="removeNotification(notification, $event)">
-        <cd-icon type="destroy"></cd-icon>
-      </button>
+<div class="notification-area">
+  @if (executingTasks.length > 0) {
+    <div
+      class="notification-section-heading cds--type-heading-compact-01"
+      i18n
+    >
+      Running tasks
     </div>
 
     @for (task of executingTasks; track task.begin_time) {
@@ -101,12 +31,12 @@
                 {{ task.begin_time | relativeDate }}
               </span>
 
-              <span class="task-progress"> {{ task.progress || 0 }} % </span>
+              <span class="task-progress cds--type-label-01"> {{ task.progress || 0 }} % </span>
             </div>
           </div>
         </div>
 
-        <div class="notification-divider"></div>
+        <div class="border-subtle-bottom"></div>
       </div>
     }
   }
@@ -121,45 +51,25 @@
         class="notification-item"
         data-testid="notification-item"
       >
-        <cd-icon
-          id="notification-icon"
-          [type]="notificationIconMap[notification.type] || notificationIconMap['default']"
+        <cd-notification-item
+          [type]="notification.type"
+          [title]="notification.title"
+          [timestamp]="notification.timestamp"
+          [message]="notification.message"
+          [notificationId]="notification.id"
         >
-        </cd-icon>
-
-        <div class="notification-content">
-          <div class="notification-timestamp">
-            {{ notification.timestamp | relativeDate }}
-          </div>
-          <div class="notification-title">
-            {{ notification.title }}
-          </div>
-          <div
-            class="notification-message"
-            [innerHTML]="notification.message | sanitizeHtml"
-          ></div>
-        </div>
-
-        <button
-          cdsButton="ghost"
-          size="sm"
-          class="notification-close"
-          (click)="removeNotification(notification, $event)"
-          type="button"
-        >
-          <cd-icon type="destroy"></cd-icon>
-        </button>
+        </cd-notification-item>
       </div>
 
       @if (!last) {
-        <div class="notification-divider"></div>
+        <div class="border-subtle-bottom"></div>
       }
     </div>
   </ng-template>
 
   @if (todayNotifications.length > 0) {
     <div
-      class="notification-section-heading"
+      class="notification-section-heading cds--type-heading-compact-01"
       i18n
     >
       Today
@@ -178,7 +88,7 @@
 
   @if (previousNotifications.length > 0) {
     <div
-      class="notification-section-heading"
+      class="notification-section-heading cds--type-heading-compact-01"
       i18n
     >
       Previous
@@ -196,7 +106,7 @@
   }
 
   @if (todayNotifications.length === 0 && previousNotifications.length === 0) {
-    <div class="notification-empty">
+    <div class="notification-empty cds--type-body-short-01">
       <div i18n>No notifications</div>
     </div>
   }

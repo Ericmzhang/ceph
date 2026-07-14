@@ -192,7 +192,8 @@ export const ICON_TYPE = {
   chevronDown: 'chevron--down',
   chevronUp: 'chevron--up',
   folder: 'folder',
-  temperature: 'temperature'
+  temperature: 'temperature',
+  left: 'arrow--left'
 } as const;
 
 export const EMPTY_STATE_IMAGE = {
