@@ -712,8 +712,11 @@ void ECBackend::handle_sub_read_reply(
     complete.processed_read_requests.erase(from_rel_shard);
     // If there was an error for non-zero data on this shard, then we must also
     // ignore all zeros, or minimum_to_decode may conclude that it has enough
-    // shards available.
-    rop.to_read.at(hoid).zeros_for_decode.erase(from_rel_shard);
+    // shards available. However, if this shard was already in zeros_for_decode,
+    // we should NOT erase it because zeros are still valid for decoding.
+    if (!rop.to_read.at(hoid).zeros_for_decode.contains(from_rel_shard)) {
+      rop.to_read.at(hoid).zeros_for_decode.erase(from_rel_shard);
+    }
     dout(20) << __func__ << " shard=" << from << " error=" << err << dendl;
   }
 
@@ -1011,17 +1014,33 @@ int ECBackend::objects_read_sync(
     uint32_t op_flags,
     bufferlist *bl) {
 
+  dout(5) << __func__ << " DEBUG: Entering objects_read_sync"
+          << " hoid=" << hoid
+          << " off=" << off
+          << " len=" << len
+          << " whoami_shard=" << get_parent()->whoami_shard()
+          << " is_primary=" << switcher->is_primary()
+          << dendl;
+
   if (!sinfo.supports_direct_reads()) {
+    dout(5) << __func__ << " DEBUG: Returning -EOPNOTSUPP (direct reads not supported)" << dendl;
     return -EOPNOTSUPP;
   }
 
-  if (get_parent()->get_local_missing().is_missing(hoid)) {
+  bool is_missing = get_parent()->get_local_missing().is_missing(hoid);
+  dout(5) << __func__ << " DEBUG: is_missing=" << is_missing
+          << " local_missing=" << get_parent()->get_local_missing()
+          << dendl;
+  
+  if (is_missing) {
+    dout(5) << __func__ << " DEBUG: Returning -EIO because object is in local_missing for hoid=" << hoid << dendl;
     return -EIO;  // Permission denied (cos its missing)
   }
 
   auto [shard_offset, shard_len] = extent_to_shard_extent(off, len);
 
-
+  dout(5) << __func__ << " DEBUG: Calculated shard_offset=" << shard_offset
+          << " shard_len=" << shard_len << dendl;
   dout(20) << __func__ << " Submitting sync read: "
       << " hoid=" << hoid
       << " shard_offset=" << shard_offset
@@ -1030,11 +1049,13 @@ int ECBackend::objects_read_sync(
       << " primary=" << switcher->is_primary()
       << dendl;
 
-
-  return switcher->store->read(switcher->ch,
+  int ret = switcher->store->read(switcher->ch,
           ghobject_t(hoid, ghobject_t::NO_GEN, get_parent()->whoami_shard().shard),
           shard_offset,
           shard_len, *bl, op_flags);
+  
+  dout(5) << __func__ << " DEBUG: store->read returned " << ret << dendl;
+  return ret;
 }
 
 std::pair<uint64_t, uint64_t> ECBackend::extent_to_shard_extent(uint64_t off, uint64_t len) {

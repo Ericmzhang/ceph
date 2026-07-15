@@ -757,7 +757,7 @@ skip_upmap:
 
     vector<int> raw, up, acting;
     int raw_primary, up_primary, acting_primary;
-    osdmap.pg_to_raw_osds(pgid, &raw, &raw_primary);
+    osdmap.pg_to_raw_osds(pgid, &raw, &raw_primary, nullptr);
     osdmap.pg_to_up_acting_osds(pgid, &up, &up_primary,
                                 &acting, &acting_primary);
     cout << pgid << " raw (" << raw << ", p" << raw_primary
@@ -799,7 +799,7 @@ skip_upmap:
 	  }
 	  primary = osds[0];
 	} else if (test_map_pgs_dump_all) {
-          osdmap.pg_to_raw_osds(pgid, &raw, &calced_primary);
+          osdmap.pg_to_raw_osds(pgid, &raw, &calced_primary, nullptr);
           osdmap.pg_to_up_acting_osds(pgid, &up, &up_primary,
                                       &acting, &acting_primary);
 	  osds = acting;

@@ -1252,7 +1252,7 @@ private:
   void _pg_to_raw_osds(
     const pg_pool_t& pool, pg_t pg,
     std::vector<int> *osds,
-    ps_t *ppps) const;
+    ps_t *ppps, CephContext *cct) const;
   int _pick_primary(const std::vector<int>& osds) const;
   void _remove_nonexistent_osds(const pg_pool_t& pool, std::vector<int>& osds) const;
 
@@ -1264,7 +1264,7 @@ private:
 
   /// pg -> (up osd std::list)
   void _raw_to_up_osds(const pg_pool_t& pool, const std::vector<int>& raw,
-                       std::vector<int> *up) const;
+                       std::vector<int> *up, CephContext* cct, pg_t pg = pg_t()) const;
 
 
   /**
@@ -1274,14 +1274,15 @@ private:
    * from the pg_temp (if specified), or -1 if you should use the calculated (up_)primary.
    */
   void _get_temp_osds(const pg_pool_t& pool, pg_t pg,
-                      std::vector<int> *temp_pg, int *temp_primary) const;
+                      std::vector<int> *temp_pg, int *temp_primary,
+                      CephContext *cct = nullptr) const;
 
   /**
    *  map to up and acting. Fills in whatever fields are non-NULL.
    */
   void _pg_to_up_acting_osds(const pg_t& pg, std::vector<int> *up, int *up_primary,
                              std::vector<int> *acting, int *acting_primary,
-			     bool raw_pg_to_pg = true) const;
+			     bool raw_pg_to_pg = true, CephContext *cct = nullptr) const;
 
 public:
   /***
@@ -1290,13 +1291,13 @@ public:
    * by anybody for data mapping purposes.
    * raw and primary must be non-NULL
    */
-  void pg_to_raw_osds(pg_t pg, std::vector<int> *raw, int *primary) const;
+  void pg_to_raw_osds(pg_t pg, std::vector<int> *raw, int *primary, CephContext *cct = nullptr) const;
   void pg_to_raw_upmap(pg_t pg, std::vector<int> *raw,
-                       std::vector<int> *raw_upmap) const;
+                       std::vector<int> *raw_upmap, CephContext *cct = nullptr) const;
   /// map a pg to its acting set. @return acting set size
   void pg_to_acting_osds(const pg_t& pg, std::vector<int> *acting,
-                        int *acting_primary) const {
-    _pg_to_up_acting_osds(pg, NULL, NULL, acting, acting_primary);
+                        int *acting_primary, CephContext *cct = nullptr) const {
+    _pg_to_up_acting_osds(pg, NULL, NULL, acting, acting_primary, true, cct);
   }
   void pg_to_acting_osds(pg_t pg, std::vector<int>& acting) const {
     return pg_to_acting_osds(pg, &acting, NULL);
@@ -1305,7 +1306,7 @@ public:
    * This does not apply temp overrides and should not be used
    * by anybody for data mapping purposes. Specify both pointers.
    */
-  void pg_to_raw_up(pg_t pg, std::vector<int> *up, int *primary) const;
+  void pg_to_raw_up(pg_t pg, std::vector<int> *up, int *primary, CephContext *cct = nullptr) const;
   /**
    * map a pg to its acting set as well as its up set. You must use
    * the acting set for data mapping purposes, but some users will
@@ -1314,12 +1315,13 @@ public:
    * Each of these pointers must be non-NULL.
    */
   void pg_to_up_acting_osds(pg_t pg, std::vector<int> *up, int *up_primary,
-                            std::vector<int> *acting, int *acting_primary) const {
-    _pg_to_up_acting_osds(pg, up, up_primary, acting, acting_primary);
+                            std::vector<int> *acting, int *acting_primary,
+                            CephContext *cct = nullptr) const {
+    _pg_to_up_acting_osds(pg, up, up_primary, acting, acting_primary, true, cct);
   }
-  void pg_to_up_acting_osds(pg_t pg, std::vector<int>& up, std::vector<int>& acting) const {
+  void pg_to_up_acting_osds(pg_t pg, std::vector<int>& up, std::vector<int>& acting, CephContext *cct = nullptr) const {
     int up_primary, acting_primary;
-    pg_to_up_acting_osds(pg, &up, &up_primary, &acting, &acting_primary);
+    pg_to_up_acting_osds(pg, &up, &up_primary, &acting, &acting_primary, cct);
   }
   bool pg_is_ec(pg_t pg) const {
     auto i = pools.find(pg.pool());

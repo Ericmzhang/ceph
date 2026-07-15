@@ -9116,7 +9116,8 @@ bool OSD::advance_pg(
     nextmap->pg_to_up_acting_osds(
       pg->pg_id.pgid,
       &newup, &up_primary,
-      &newacting, &acting_primary);
+      &newacting, &acting_primary, cct);
+    dout(10) << __func__ <<" up=" <<newup << " acting=" << newacting << dendl;
     pg->handle_advance_map(
       nextmap, lastmap, newup, up_primary,
       newacting, acting_primary, rctx);

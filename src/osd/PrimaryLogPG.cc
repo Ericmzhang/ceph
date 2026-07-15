@@ -855,28 +855,39 @@ bool PrimaryLogPG::check_laggy(OpRequestRef& op)
 {
   ceph_assert(HAVE_FEATURE(recovery_state.get_min_upacting_features(),
 		      SERVER_OCTOPUS));
+  dout(5) << __func__ << " DEBUG: Entering check_laggy for op " << op
+          << " is_primary=" << is_primary() << dendl;
+  
   if (state_test(PG_STATE_WAIT)) {
+    dout(5) << __func__ << " DEBUG: PG is in WAIT state, blocking read" << dendl;
     dout(10) << __func__ << " PG is WAIT state" << dendl;
   } else if (!state_test(PG_STATE_LAGGY)) {
     auto mnow = osd->get_mnow();
     auto ru = recovery_state.get_readable_until();
+    dout(5) << __func__ << " DEBUG: mnow=" << mnow << " readable_until=" << ru << dendl;
+    
     if (mnow <= ru) {
       // not laggy
+      dout(5) << __func__ << " DEBUG: Read allowed (mnow <= readable_until)" << dendl;
       return true;
     }
+    dout(5) << __func__ << " DEBUG: mnow > readable_until, transitioning to LAGGY" << dendl;
     dout(10) << __func__
 	     << " mnow " << mnow
 	     << " > readable_until " << ru << dendl;
 
     if (!is_primary()) {
+      dout(5) << __func__ << " DEBUG: Replica returning -EAGAIN" << dendl;
       osd->reply_op_error(op, -EAGAIN);
       return false;
     }
 
     // go to laggy state
+    dout(5) << __func__ << " DEBUG: Setting PG_STATE_LAGGY" << dendl;
     state_set(PG_STATE_LAGGY);
     publish_stats_to_osd();
   }
+  dout(5) << __func__ << " DEBUG: Read blocked - queueing in waiting_for_readable" << dendl;
   dout(10) << __func__ << " not readable" << dendl;
   waiting_for_readable.push_back(op);
   op->mark_delayed("waiting for readable");
@@ -887,9 +898,12 @@ bool PrimaryLogPG::check_laggy_requeue(OpRequestRef& op)
 {
   ceph_assert(HAVE_FEATURE(recovery_state.get_min_upacting_features(),
 		      SERVER_OCTOPUS));
+  dout(5) << __func__ << " DEBUG: Checking laggy_requeue" << dendl;
   if (!state_test(PG_STATE_WAIT) && !state_test(PG_STATE_LAGGY)) {
+    dout(5) << __func__ << " DEBUG: Not in WAIT or LAGGY state, allowing operation" << dendl;
     return true; // not laggy
   }
+  dout(5) << __func__ << " DEBUG: In WAIT or LAGGY state, requeueing operation" << dendl;
   dout(10) << __func__ << " not readable" << dendl;
   waiting_for_readable.push_front(op);
   op->mark_delayed("waiting for readable");
@@ -2078,9 +2092,12 @@ void PrimaryLogPG::do_op(OpRequestRef& op)
     osd->logger->inc(l_osd_replica_read);
   }
 
+  dout(5) << __func__ << " DEBUG: About to call check_laggy for read op " << op << dendl;
   if (!check_laggy(op)) {
+    dout(5) << __func__ << " DEBUG: check_laggy returned false, read blocked" << dendl;
     return;
   }
+  dout(5) << __func__ << " DEBUG: check_laggy passed, proceeding with read" << dendl;
 
   if (!op_has_sufficient_caps(op)) {
     osd->reply_op_error(op, -EPERM);
@@ -2168,8 +2185,10 @@ void PrimaryLogPG::do_op(OpRequestRef& op)
   if (pi->has_flag(pg_pool_t::FLAG_EIO)) {
     // drop op on the floor; the client will handle returning EIO
     if (m->has_flag(CEPH_OSD_FLAG_SUPPORTSPOOLEIO)) {
+      dout(5) << __func__ << " DEBUG: Discarding op due to pool EIO flag" << dendl;
       dout(10) << __func__ << " discarding op due to pool EIO flag" << dendl;
     } else {
+      dout(5) << __func__ << " DEBUG: Replying -EIO due to pool EIO flag for op " << op << dendl;
       dout(10) << __func__ << " replying EIO due to pool EIO flag" << dendl;
       osd->reply_op_error(op, -EIO);
     }
@@ -4266,7 +4285,10 @@ void PrimaryLogPG::execute_ctx(OpContext *ctx)
   }
 
 
+  dout(5) << __func__ << " DEBUG: About to call prepare_transaction for ctx=" << ctx << dendl;
   int result = prepare_transaction(ctx);
+  dout(5) << __func__ << " DEBUG: prepare_transaction returned result=" << result
+          << " pending_async_reads=" << !ctx->pending_async_reads.empty() << dendl;
 
   {
 #ifdef WITH_LTTNG
@@ -4316,10 +4338,12 @@ void PrimaryLogPG::execute_ctx(OpContext *ctx)
   }
 
   // prepare the reply
+  dout(5) << __func__ << " DEBUG: Creating reply with result=" << result
+          << " for op=" << ctx->op << dendl;
   ctx->reply = new MOSDOpReply(m, result, get_osdmap_epoch(), 0,
-			       ignore_out_data);
+  	       ignore_out_data);
   dout(20) << __func__ << " alloc reply " << ctx->reply
-	   << " result " << result << dendl;
+    << " result " << result << dendl;
 
   // read or error?
   if ((ctx->op_t->empty() || result < 0) && !ctx->update_log_only) {
@@ -5891,12 +5915,22 @@ int PrimaryLogPG::do_read(OpContext *ctx, OSDOp& osd_op) {
         op.extent.length >= oi.size)
       maybe_crc = oi.data_digest;
 
+    dout(5) << __func__ << " DEBUG: pool.info.is_erasure()=" << pool.info.is_erasure()
+            << " ctx->op->ec_direct_read()=" << ctx->op->ec_direct_read()
+            << " soid=" << soid << dendl;
+
     if (ctx->op->ec_direct_read()) {
+      dout(5) << __func__ << " DEBUG: Taking EC direct read path (sync)"
+              << " soid=" << soid
+              << " offset=" << op.extent.offset
+              << " length=" << op.extent.length << dendl;
       result = pgbackend->objects_read_sync(
         soid, op.extent.offset, op.extent.length, op.flags, &osd_op.outdata);
 
-        dout(20) << " EC sync read for " << soid << " result=" << result << dendl;
+      dout(5) << __func__ << " DEBUG: EC sync read returned result=" << result << dendl;
+      dout(20) << " EC sync read for " << soid << " result=" << result << dendl;
     } else {
+    dout(5) << __func__ << " DEBUG: Taking async read path for soid=" << soid << dendl;
     ctx->pending_async_reads.push_back(
       make_pair(
         boost::make_tuple(op.extent.offset, op.extent.length, op.flags),
@@ -5910,8 +5944,13 @@ int PrimaryLogPG::do_read(OpContext *ctx, OSDOp& osd_op) {
       new ReadFinisher(osd_op));
     }
   } else {
+    dout(5) << __func__ << " DEBUG: Calling pgbackend->objects_read_sync for non-EC read"
+            << " soid=" << soid
+            << " offset=" << op.extent.offset
+            << " length=" << op.extent.length << dendl;
     int r = pgbackend->objects_read_sync(
       soid, op.extent.offset, op.extent.length, op.flags, &osd_op.outdata);
+    dout(5) << __func__ << " DEBUG: objects_read_sync returned r=" << r << dendl;
     // whole object?  can we verify the checksum?
     if (r >= 0 && op.extent.offset == 0 &&
         (uint64_t)r == oi.size && oi.is_data_digest()) {

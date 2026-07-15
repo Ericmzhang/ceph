@@ -1120,12 +1120,13 @@ void PG::read_state(ObjectStore *store)
     int primary, up_primary;
     vector<int> acting, up;
     get_osdmap()->pg_to_up_acting_osds(
-      pg_id.pgid, &up, &up_primary, &acting, &primary);
+      pg_id.pgid, &up, &up_primary, &acting, &primary, cct);
     recovery_state.init_primary_up_acting(
       up,
       acting,
       up_primary,
       primary);
+    dout(10) << __func__ <<" up=" << up << " acting=" << acting << dendl;
     recovery_state.set_role(OSDMap::calc_pg_role(pg_whoami, acting));
   }
 

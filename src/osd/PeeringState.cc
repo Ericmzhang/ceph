@@ -1396,10 +1396,14 @@ void PeeringState::recalc_readable_until()
 {
   ceph_assert(is_primary());
   ceph::signedspan min = readable_until_ub_sent;
+  psdout(5) << "DEBUG: recalc_readable_until - initial min=" << min
+            << " acting.size()=" << acting.size() << dendl;
   for (unsigned i = 0; i < acting.size(); ++i) {
     if (acting[i] == pg_whoami.osd || acting[i] == CRUSH_ITEM_NONE) {
       continue;
     }
+    psdout(5) << "DEBUG: peer osd." << acting[i]
+	     << " ruub=" << acting_readable_until_ub[i] << dendl;
     dout(20) << "peer osd." << acting[i]
 	     << " ruub " << acting_readable_until_ub[i] << dendl;
     if (acting_readable_until_ub[i] < min) {
@@ -1408,6 +1412,9 @@ void PeeringState::recalc_readable_until()
   }
   readable_until = min;
   readable_until_ub = min;
+  psdout(5) << "DEBUG: recalc_readable_until - final readable_until=" << readable_until
+	   << " readable_until_ub=" << readable_until_ub
+	   << " (sent " << readable_until_ub_sent << ")" << dendl;
   dout(20) << "readable_until[_ub] " << readable_until
 	   << " (sent " << readable_until_ub_sent << ")" << dendl;
 }
@@ -7091,16 +7098,22 @@ boost::statechart::result PeeringState::Active::react(const AllReplicasActivated
   }
 
   auto mnow = pl->get_mnow();
+  psdout(5) << "DEBUG: AllReplicasActivated - mnow=" << mnow
+            << " prior_readable_until_ub=" << ps->prior_readable_until_ub
+            << " readable_until=" << ps->readable_until
+            << " readable_until_ub=" << ps->readable_until_ub << dendl;
   if (ps->prior_readable_until_ub > mnow) {
+    psdout(5) << "DEBUG: Setting PG_STATE_WAIT - prior_readable_until_ub > mnow" << dendl;
     psdout(10) << " waiting for prior_readable_until_ub "
-	       << ps->prior_readable_until_ub << " > mnow " << mnow << dendl;
+        << ps->prior_readable_until_ub << " > mnow " << mnow << dendl;
     ps->state_set(PG_STATE_WAIT);
     pl->queue_check_readable(
       ps->last_peering_reset,
       ps->prior_readable_until_ub - mnow);
   } else {
+    psdout(5) << "DEBUG: Not setting WAIT - mnow >= prior_readable_until_ub" << dendl;
     psdout(10) << " mnow " << mnow << " >= prior_readable_until_ub "
-	       << ps->prior_readable_until_ub << dendl;
+        << ps->prior_readable_until_ub << dendl;
   }
 
   if (ps->pool.info.has_flag(pg_pool_t::FLAG_CREATING)) {
