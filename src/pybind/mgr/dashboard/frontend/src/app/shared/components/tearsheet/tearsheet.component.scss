@@ -4,17 +4,18 @@
 .cds--modal-container.cds--modal-container--lg {
   position: fixed;
 
-  // 88px from top
-  inset-block-start: 88px;
+  // Fill remaining viewport between the 88px top inset and 64px bottom inset.
+  // Carbon has no API for tearsheet insets.
+  block-size: calc(100vh - 88px - 64px);
+  max-block-size: calc(100vh - 88px - 64px);
+  inline-size: auto;
 
-  // Fill remaining viewport height
-  block-size: calc(100vh - 88px);
-  max-block-size: calc(100vh - 88px);
+  inset-block-start: 88px;
+  inset-block-end: 64px;
 
   // 64px margins left & right
   inset-inline-start: 64px;
   inset-inline-end: 64px;
-  inline-size: auto;
   max-inline-size: none;
   display: flex;
   flex-direction: column;
@@ -37,6 +38,7 @@
 
 .cds--modal-container.cds--modal-container--sm {
   inset-block-start: 88px;
+  inset-block-end: 64px;
   block-size: 50vh;
   max-block-size: 50vh;
   inset-inline-start: 35%;
