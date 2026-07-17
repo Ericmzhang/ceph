@@ -96,6 +96,7 @@ import { TearsheetComponent } from './tearsheet/tearsheet.component';
 import { ClickableTileComponent } from './clickable-tile/clickable-tile.component';
 
 // Icons
+import InfoIcon from '@carbon/icons/es/information/16';
 import CopyIcon from '@carbon/icons/es/copy/32';
 import downloadIcon from '@carbon/icons/es/download/16';
 import CheckmarkFilledIcon from '@carbon/icons/es/checkmark--filled/16';
@@ -316,6 +317,7 @@ export class ComponentsModule {
       downloadIcon,
       CheckmarkFilledIcon,
       ErrorFilledIcon,
+      InfoIcon,
       InformationFilledIcon,
       WarningFilledIcon,
       NotificationFilledIcon,
