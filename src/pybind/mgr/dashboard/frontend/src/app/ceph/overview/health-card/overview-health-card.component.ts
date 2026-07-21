@@ -30,6 +30,7 @@ import {
   HardwareCardVM,
   buildHardwareCardVM
 } from '~/app/shared/models/overview';
+import { AlertState } from '~/app/shared/models/prometheus-alerts';
 import { HardwareService } from '~/app/shared/api/hardware.service';
 import { HealthService } from '~/app/shared/api/health.service';
 import { MgrModuleService } from '~/app/shared/api/mgr-module.service';
@@ -40,6 +41,8 @@ import { CallHomeService } from '~/app/shared/api/call-home.service';
 import { StorageInsightsService } from '~/app/shared/api/storage-insights.service';
 import { environment } from '~/environments/environment';
 import { PrometheusAlertService } from '~/app/shared/services/prometheus-alert.service';
+
+const PG_ALERT_PREFIX = 'CephPG';
 
 interface HealthItemConfig {
   key: 'mon' | 'mgr' | 'osd' | 'hosts';
@@ -151,6 +154,17 @@ export class OverviewHealthCardComponent {
       )
     : of(false);
 
+  readonly pgAlertCount$ = this.prometheusAlertService.totalAlerts$.pipe(
+    map(
+      () =>
+        this.prometheusAlertService.alerts.filter(
+          (a) =>
+            a.status.state === AlertState.ACTIVE && a.labels.alertname?.startsWith(PG_ALERT_PREFIX)
+        ).length
+    ),
+    startWith(0)
+  );
+
   readonly storageInsightsEnabled$: Observable<boolean> = this.permissions?.configOpt?.read
     ? this.storageInsightsService.getStorageInsightsStatus().pipe(
         catchError(() => of(false)),
@@ -170,7 +184,4 @@ export class OverviewHealthCardComponent {
     }),
     shareReplay({ bufferSize: 1, refCount: true })
   );
-
-  readonly pgAlertCount$ = this.prometheusAlertService.pgAlerts$.pipe(startWith(0));
-
 }
