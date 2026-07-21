@@ -39,6 +39,7 @@ import { GaugeChartComponent } from '@carbon/charts-angular';
 import { CallHomeService } from '~/app/shared/api/call-home.service';
 import { StorageInsightsService } from '~/app/shared/api/storage-insights.service';
 import { environment } from '~/environments/environment';
+import { PrometheusAlertService } from '~/app/shared/services/prometheus-alert.service';
 
 interface HealthItemConfig {
   key: 'mon' | 'mgr' | 'osd' | 'hosts';
@@ -79,7 +80,7 @@ export class OverviewHealthCardComponent {
   private readonly authStorageService = inject(AuthStorageService);
   private readonly callHomeService = inject(CallHomeService);
   private readonly storageInsightsService = inject(StorageInsightsService);
-  environment = environment;
+  private readonly prometheusAlertService = inject(PrometheusAlertService);
 
   @Input({ required: true }) vm!: HealthCardVM;
   @Output() viewIncidents = new EventEmitter<void>();
@@ -169,4 +170,7 @@ export class OverviewHealthCardComponent {
     }),
     shareReplay({ bufferSize: 1, refCount: true })
   );
+
+  readonly pgAlertCount$ = this.prometheusAlertService.pgAlerts$.pipe(startWith(0));
+
 }
