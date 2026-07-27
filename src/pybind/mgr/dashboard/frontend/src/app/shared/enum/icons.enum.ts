@@ -169,7 +169,7 @@ export const ICON_TYPE = {
   warningAlt: 'warning--alt',
   checkMarkOutline: 'checkmark--outline',
   arrowRight: 'arrow--right',
-  arrowUpRight: ' arrow--up-right',
+  arrowUpRight: 'arrow--up-right',
   inProgress: 'in-progress',
   arrowDown: 'arrow--down',
   destroy: 'close',
