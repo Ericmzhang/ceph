@@ -1,4 +1,4 @@
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { Component, ViewChild } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { AbstractControl, FormControl, FormGroup, Validators } from '@angular/forms';
@@ -366,6 +366,7 @@ describe('TearsheetComponent', () => {
 
       expect(formHost.tearsheet.currentStep).toBe(1);
       expect(formHost.tearsheet.steps[0].invalid).toBe(false);
+      flush();
     }));
 
     it('should stay on step when invalid then advance after the field is fixed', fakeAsync(() => {
@@ -387,6 +388,7 @@ describe('TearsheetComponent', () => {
       tick(10);
       formHostFixture.detectChanges();
       expect(formHost.tearsheet.currentStep).toBe(1);
+      flush();
     }));
 
     it('should submit after validity refresh settles async validators', fakeAsync(() => {
@@ -413,6 +415,7 @@ describe('TearsheetComponent', () => {
       expect(submitSpy).toHaveBeenCalledWith(
         expect.objectContaining({ name: 'default-name', requiredField: 'filled' })
       );
+      flush();
     }));
 
     it('should navigate to the first invalid step instead of silently blocking Create', fakeAsync(() => {
@@ -432,6 +435,7 @@ describe('TearsheetComponent', () => {
       expect(submitSpy).not.toHaveBeenCalled();
       expect(formHost.tearsheet.currentStep).toBe(0);
       expect(formHost.tearsheet.steps[0].invalid).toBe(true);
+      flush();
     }));
 
     it('should not advance if the user navigated away before the async validator settled', fakeAsync(() => {
@@ -457,6 +461,7 @@ describe('TearsheetComponent', () => {
       formHostFixture.detectChanges();
 
       expect(formHost.tearsheet.currentStep).toBe(1);
+      flush();
     }));
   });
 });
