@@ -9,6 +9,7 @@ import { NvmeofService } from '~/app/shared/api/nvmeof.service';
 import { NvmeofStateService } from '../nvmeof-state.service';
 import { SharedModule } from '~/app/shared/shared.module';
 import { AuthStorageService } from '~/app/shared/services/auth-storage.service';
+import { provideAnimations } from '@angular/platform-browser/animations';
 
 describe('NvmeofSubsystemNamespacesListComponent', () => {
   let component: NvmeofSubsystemNamespacesListComponent;
@@ -48,6 +49,7 @@ describe('NvmeofSubsystemNamespacesListComponent', () => {
       declarations: [NvmeofSubsystemNamespacesListComponent],
       imports: [HttpClientTestingModule, RouterTestingModule, SharedModule],
       providers: [
+        provideAnimations(),
         {
           provide: ActivatedRoute,
           useValue: {
