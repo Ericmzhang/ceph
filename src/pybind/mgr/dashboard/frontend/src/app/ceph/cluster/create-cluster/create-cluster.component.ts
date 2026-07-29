@@ -73,7 +73,7 @@ export class CreateClusterComponent implements OnInit, OnDestroy {
   selectedOption = {};
   simpleDeployment = true;
   stepsToSkip: { [steps: string]: boolean } = {};
-  icons = IconSize;
+  iconSize = IconSize;
 
   constructor(
     private authStorageService: AuthStorageService,

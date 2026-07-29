@@ -170,6 +170,7 @@ export const ICON_TYPE = {
   checkMarkOutline: 'checkmark--outline',
   arrowRight: 'arrow--right',
   arrowUpRight: 'arrow--up-right',
+  right: 'arrow--right',
   inProgress: 'in-progress',
   arrowDown: 'arrow--down',
   destroy: 'close',
@@ -184,7 +185,6 @@ export const ICON_TYPE = {
   ibmCloudDedicatedHost: 'ibm-cloud--dedicated-host',
   clusterIcon: 'web-services--cluster',
   download: 'download',
-  cloudMonitoring: 'cloud--monitoring',
   trash: 'trash-can',
   replicate: 'replicate',
   share: 'share',
@@ -193,7 +193,8 @@ export const ICON_TYPE = {
   chevronUp: 'chevron--up',
   folder: 'folder',
   temperature: 'temperature',
-  left: 'arrow--left'
+  left: 'arrow--left',
+  cloudMonitoring: 'cloud--monitoring'
 } as const;
 
 export const EMPTY_STATE_IMAGE = {
