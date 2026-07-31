@@ -100,7 +100,6 @@
           @else {
           <button cdsButton="primary"
                   size="xl"
-                  [disabled]="steps[currentStep]?.invalid"
                   (click)="onNext()"
                   i18n>Next</button>
           }
@@ -248,7 +247,6 @@
         @else {
         <button cdsButton="primary"
                 size="xl"
-                [disabled]="steps[currentStep]?.invalid"
                 (click)="onNext()"
                 i18n>Next</button>
         }
