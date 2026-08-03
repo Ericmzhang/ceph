@@ -71,6 +71,17 @@ struct ECCommon {
 
   virtual ~ECCommon() = default;
 
+  static bool is_cross_zone(const ECListener *parent,
+                            const ECUtil::stripe_info_t &sinfo,
+                            shard_id_t peer_shard) {
+    if (parent->get_pool().peering_crush_bucket_count == 0)
+      return false;
+
+    int my_zone = sinfo.get_shard_zone(parent->whoami_shard().shard);
+    int peer_zone = sinfo.get_shard_zone(peer_shard);
+    return my_zone != peer_zone;
+  }
+
   virtual void handle_sub_write(
       pg_shard_t from,
       OpRequestRef msg,
@@ -272,6 +283,9 @@ struct ECCommon {
 
     std::list<ECUtil::log_entry_t> debug_log;
 
+    // Recorded at dispatch time for cross-zone shard read latency tracking
+    std::map<pg_shard_t, utime_t> cross_zone_read_dispatch_time;
+
     ReadOp(
         int priority,
         ceph_tid_t tid,
@@ -437,7 +451,6 @@ struct ECCommon {
         ECUtil::shard_extent_map_t buffers_read,
         ec_align_t read,
         bufferlist *outbl);
-
     /// Helper function to select available shards for reading
     std::expected<std::tuple<shard_id_set, shard_id_map<pg_shard_t>, shard_id_set>, int>
     select_shards_for_read(
@@ -527,6 +540,9 @@ struct ECCommon {
 
       /// In progress write state.
       int pending_commits = 0;
+
+      // Dispatch time per cross-zone shard sub-write, recorded at send for latency tracking
+      std::map<pg_shard_t, utime_t> cross_zone_write_dispatch_time;
 
       bool write_in_progress() const {
         return pending_commits != 0;
@@ -790,6 +806,9 @@ struct ECCommon {
       std::map<std::string, ceph::buffer::list, std::less<>> xattrs;
       ObjectContextRef obc;
       std::set<pg_shard_t> waiting_on_pushes;
+
+      // Dispatch time per cross-zone shard push, recorded at send for latency tracking
+      std::map<pg_shard_t, utime_t> cross_zone_recovery_push_dispatch_time;
 
       void dump(ceph::Formatter *f) const;
 
