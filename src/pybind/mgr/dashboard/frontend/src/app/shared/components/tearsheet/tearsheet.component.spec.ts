@@ -38,6 +38,7 @@ class MockHostComponent {
   title = 'Test Title';
   description = 'Test Description';
   overflowScroll?: TearsheetOverflowScroll;
+  step1Valid: boolean | null = null;
 
   onSubmit() {}
 
