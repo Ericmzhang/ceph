@@ -343,7 +343,9 @@ public:
   void apply_stats(
     const hobject_t &soid,
     const object_stat_sum_t &delta_stats) override;
-
+  void add_ec_cross_zone_stats(const object_stat_sum_t &delta) override {
+    unstable_stats.add(delta);
+  }
   bool primary_error(const hobject_t& soid, eversion_t v);
 
   void remove_missing_object(const hobject_t &oid,

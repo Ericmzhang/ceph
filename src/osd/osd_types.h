@@ -2051,6 +2051,12 @@ struct object_stat_sum_t {
   int64_t num_omap_bytes{0};
   int64_t num_omap_keys{0};
   int64_t num_objects_repaired{0};
+  int64_t num_ec_cross_zone_write_ops{0};
+  int64_t num_ec_cross_zone_write_bytes{0};
+  int64_t num_ec_cross_zone_recovery_push_ops{0};
+  int64_t num_ec_cross_zone_recovery_push_bytes{0};
+  int64_t num_ec_cross_zone_read_ops{0};
+  int64_t num_ec_cross_zone_read_bytes{0};
 
   object_stat_sum_t() = default;
 
@@ -2096,6 +2102,12 @@ struct object_stat_sum_t {
     FLOOR(num_objects_pinned);
     FLOOR(num_legacy_snapsets);
     FLOOR(num_objects_repaired);
+    FLOOR(num_ec_cross_zone_write_ops);
+    FLOOR(num_ec_cross_zone_write_bytes);
+    FLOOR(num_ec_cross_zone_recovery_push_ops);
+    FLOOR(num_ec_cross_zone_recovery_push_bytes);
+    FLOOR(num_ec_cross_zone_read_ops);
+    FLOOR(num_ec_cross_zone_read_bytes);
 #undef FLOOR
   }
 
@@ -2133,6 +2145,12 @@ struct object_stat_sum_t {
     SPLIT(num_omap_bytes);
     SPLIT(num_omap_keys);
     SPLIT(num_objects_repaired);
+    SPLIT(num_ec_cross_zone_write_ops);
+    SPLIT(num_ec_cross_zone_write_bytes);
+    SPLIT(num_ec_cross_zone_recovery_push_ops);
+    SPLIT(num_ec_cross_zone_recovery_push_bytes);
+    SPLIT(num_ec_cross_zone_read_ops);
+    SPLIT(num_ec_cross_zone_read_bytes);
     SPLIT_PRESERVE_NONZERO(num_shallow_scrub_errors);
     SPLIT_PRESERVE_NONZERO(num_deep_scrub_errors);
     for (unsigned i = 0; i < out.size(); ++i) {
@@ -2221,7 +2239,13 @@ struct object_stat_sum_t {
         sizeof(num_evict_mode_full) +
         sizeof(num_objects_pinned) +
         sizeof(num_objects_missing) +
-        sizeof(num_legacy_snapsets)
+        sizeof(num_legacy_snapsets) +
+        sizeof(num_ec_cross_zone_write_ops) +
+        sizeof(num_ec_cross_zone_write_bytes) +
+        sizeof(num_ec_cross_zone_recovery_push_ops) +
+        sizeof(num_ec_cross_zone_recovery_push_bytes) +
+        sizeof(num_ec_cross_zone_read_ops) +
+        sizeof(num_ec_cross_zone_read_bytes)
       ,
       "object_stat_sum_t have padding");
   }

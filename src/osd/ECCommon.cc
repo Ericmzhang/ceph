@@ -619,7 +619,7 @@ void ECCommon::ReadPipeline::get_want_to_read_shards(
     const list<ec_align_t> &to_read,
     ECUtil::shard_extent_set_t &want_shard_reads) {
   if (sinfo.supports_partial_reads()) {
-    // Optimised.
+    // Optimised.F
     for (const auto &single_region: to_read) {
       get_min_want_to_read_shards(single_region, want_shard_reads);
     }
@@ -1029,10 +1029,14 @@ void ECCommon::RMWPipeline::cache_ready(Op &op) {
       r->map_epoch = get_osdmap_epoch();
       r->min_epoch = get_parent()->get_interval_start_epoch();
       r->trace = trace;
-      if (ECCommon::is_cross_zone(get_parent(), sinfo, pg_shard.shard)) {
+      if (should_send && ECCommon::is_cross_zone(get_parent(), sinfo, pg_shard.shard)) {
         get_parent()->get_logger()->inc(l_osd_stretch_ec_cross_zone_write_ops);
         get_parent()->get_logger()->inc(l_osd_stretch_ec_cross_zone_write_bytes,
                                         transaction.get_num_bytes());
+        object_stat_sum_t delta;
+        delta.num_ec_cross_zone_write_ops = 1;
+        delta.num_ec_cross_zone_write_bytes = transaction.get_num_bytes();
+        get_parent()->add_ec_cross_zone_stats(delta);
         op.cross_zone_write_dispatch_time[pg_shard] = ceph_clock_now();
       }
       messages.push_back(std::make_pair(pg_shard.osd, r));
@@ -1621,6 +1625,10 @@ void ECCommon::RecoveryBackend::continue_recovery_op(
           get_parent()->get_logger()->inc(l_osd_stretch_ec_cross_zone_recovery_push_ops);
           get_parent()->get_logger()->inc(l_osd_stretch_ec_cross_zone_recovery_push_bytes,
                                           pop.data.length());
+                                              object_stat_sum_t delta;
+          delta.num_ec_cross_zone_recovery_push_ops = 1;
+          delta.num_ec_cross_zone_recovery_push_bytes = pop.data.length();
+          get_parent()->add_ec_cross_zone_stats(delta);
           op.cross_zone_recovery_push_dispatch_time[pg_shard] = ceph_clock_now();
         }
         dout(10) << __func__ << ": pop shard=" << pg_shard

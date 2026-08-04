@@ -169,7 +169,7 @@ struct ECListener {
   virtual void apply_stats(
      const hobject_t &soid,
      const object_stat_sum_t &delta_stats) = 0;
-
+  virtual void add_ec_cross_zone_stats(const object_stat_sum_t &delta) = 0;
   // new batch
   virtual bool is_missing_object(const hobject_t& oid) const = 0;
   virtual void add_local_next_event(const pg_log_entry_t& e) = 0;

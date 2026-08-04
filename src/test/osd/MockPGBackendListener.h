@@ -198,6 +198,10 @@ public:
     }
   }
 
+  void add_ec_cross_zone_stats(const object_stat_sum_t &delta) override {
+    // no-op for mock
+  }
+
   void apply_stats(
     const hobject_t &soid,
     const object_stat_sum_t &delta_stats) override {

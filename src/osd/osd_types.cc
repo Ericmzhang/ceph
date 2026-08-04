@@ -2555,11 +2555,17 @@ void object_stat_sum_t::dump(Formatter *f) const
   f->dump_int("num_omap_bytes", num_omap_bytes);
   f->dump_int("num_omap_keys", num_omap_keys);
   f->dump_int("num_objects_repaired", num_objects_repaired);
+  f->dump_int("num_ec_cross_zone_write_ops", num_ec_cross_zone_write_ops);
+  f->dump_int("num_ec_cross_zone_write_bytes", num_ec_cross_zone_write_bytes);
+  f->dump_int("num_ec_cross_zone_recovery_push_ops", num_ec_cross_zone_recovery_push_ops);
+  f->dump_int("num_ec_cross_zone_recovery_push_bytes", num_ec_cross_zone_recovery_push_bytes);
+  f->dump_int("num_ec_cross_zone_read_ops", num_ec_cross_zone_read_ops);
+  f->dump_int("num_ec_cross_zone_read_bytes", num_ec_cross_zone_read_bytes);
 }
 
 void object_stat_sum_t::encode(ceph::buffer::list& bl) const
 {
-  ENCODE_START(20, 14, bl);
+  ENCODE_START(21, 14, bl);
 #if defined(CEPH_LITTLE_ENDIAN)
   bl.append((char *)(&num_bytes), sizeof(object_stat_sum_t));
 #else
@@ -2603,6 +2609,12 @@ void object_stat_sum_t::encode(ceph::buffer::list& bl) const
   encode(num_omap_bytes, bl);
   encode(num_omap_keys, bl);
   encode(num_objects_repaired, bl);
+  encode(num_ec_cross_zone_write_ops, bl);
+  encode(num_ec_cross_zone_write_bytes, bl);
+  encode(num_ec_cross_zone_recovery_push_ops, bl);
+  encode(num_ec_cross_zone_recovery_push_bytes, bl);
+  encode(num_ec_cross_zone_read_ops, bl);
+  encode(num_ec_cross_zone_read_bytes, bl);
 #endif
   ENCODE_FINISH(bl);
 }
@@ -2610,7 +2622,7 @@ void object_stat_sum_t::encode(ceph::buffer::list& bl) const
 void object_stat_sum_t::decode(ceph::buffer::list::const_iterator& bl)
 {
   bool decode_finish = false;
-  static const int STAT_SUM_DECODE_VERSION = 20;
+  static const int STAT_SUM_DECODE_VERSION = 21;
   DECODE_START(STAT_SUM_DECODE_VERSION, bl);
 #if defined(CEPH_LITTLE_ENDIAN)
   if (struct_v == STAT_SUM_DECODE_VERSION) {
@@ -2671,6 +2683,14 @@ void object_stat_sum_t::decode(ceph::buffer::list::const_iterator& bl)
     if (struct_v >= 20) {
       decode(num_objects_repaired, bl);
     }
+    if (struct_v >= 21) {
+      decode(num_ec_cross_zone_write_ops, bl);
+      decode(num_ec_cross_zone_write_bytes, bl);
+      decode(num_ec_cross_zone_recovery_push_ops, bl);
+      decode(num_ec_cross_zone_recovery_push_bytes, bl);
+      decode(num_ec_cross_zone_read_ops, bl);
+      decode(num_ec_cross_zone_read_bytes, bl);
+    }
   }
   DECODE_FINISH(bl);
 }
@@ -2717,6 +2737,12 @@ list<object_stat_sum_t> object_stat_sum_t::generate_test_instances()
   a.num_omap_bytes = 20000;
   a.num_omap_keys = 200;
   a.num_objects_repaired = 300;
+  a.num_ec_cross_zone_write_ops = 10;
+  a.num_ec_cross_zone_write_bytes = 1024;
+  a.num_ec_cross_zone_recovery_push_ops = 5;
+  a.num_ec_cross_zone_recovery_push_bytes = 512;
+  a.num_ec_cross_zone_read_ops = 8;
+  a.num_ec_cross_zone_read_bytes = 1024;
   o.push_back(object_stat_sum_t(a));
 
   return o;
@@ -2764,6 +2790,12 @@ void object_stat_sum_t::add(const object_stat_sum_t& o)
   num_omap_bytes += o.num_omap_bytes;
   num_omap_keys += o.num_omap_keys;
   num_objects_repaired += o.num_objects_repaired;
+  num_ec_cross_zone_write_ops += o.num_ec_cross_zone_write_ops;
+  num_ec_cross_zone_write_bytes += o.num_ec_cross_zone_write_bytes;
+  num_ec_cross_zone_recovery_push_ops += o.num_ec_cross_zone_recovery_push_ops;
+  num_ec_cross_zone_recovery_push_bytes += o.num_ec_cross_zone_recovery_push_bytes;
+  num_ec_cross_zone_read_ops += o.num_ec_cross_zone_read_ops;
+  num_ec_cross_zone_read_bytes += o.num_ec_cross_zone_read_bytes;
 }
 
 void object_stat_sum_t::sub(const object_stat_sum_t& o)
@@ -2808,6 +2840,12 @@ void object_stat_sum_t::sub(const object_stat_sum_t& o)
   num_omap_bytes -= o.num_omap_bytes;
   num_omap_keys -= o.num_omap_keys;
   num_objects_repaired -= o.num_objects_repaired;
+  num_ec_cross_zone_write_ops -= o.num_ec_cross_zone_write_ops;
+  num_ec_cross_zone_write_bytes -= o.num_ec_cross_zone_write_bytes;
+  num_ec_cross_zone_recovery_push_ops -= o.num_ec_cross_zone_recovery_push_ops;
+  num_ec_cross_zone_recovery_push_bytes -= o.num_ec_cross_zone_recovery_push_bytes;
+  num_ec_cross_zone_read_ops -= o.num_ec_cross_zone_read_ops;
+  num_ec_cross_zone_read_bytes -= o.num_ec_cross_zone_read_bytes;
 }
 
 bool operator==(const object_stat_sum_t& l, const object_stat_sum_t& r)
@@ -2852,7 +2890,13 @@ bool operator==(const object_stat_sum_t& l, const object_stat_sum_t& r)
     l.num_objects_manifest == r.num_objects_manifest &&
     l.num_omap_bytes == r.num_omap_bytes &&
     l.num_omap_keys == r.num_omap_keys &&
-    l.num_objects_repaired == r.num_objects_repaired;
+    l.num_objects_repaired == r.num_objects_repaired &&
+    l.num_ec_cross_zone_write_ops == r.num_ec_cross_zone_write_ops &&
+    l.num_ec_cross_zone_write_bytes == r.num_ec_cross_zone_write_bytes &&
+    l.num_ec_cross_zone_recovery_push_ops == r.num_ec_cross_zone_recovery_push_ops &&
+    l.num_ec_cross_zone_recovery_push_bytes == r.num_ec_cross_zone_recovery_push_bytes &&
+    l.num_ec_cross_zone_read_ops == r.num_ec_cross_zone_read_ops &&
+    l.num_ec_cross_zone_read_bytes == r.num_ec_cross_zone_read_bytes;
 }
 
 // -- object_stat_collection_t --

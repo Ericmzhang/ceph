@@ -507,7 +507,7 @@ void ECBackend::handle_sub_read(
 		 << " chunk_size=" << sinfo.get_chunk_size() << dendl;
         bool error = false;
         for (int m = 0; m < (int)len && !error;
-             m += sinfo.get_chunk_size()) {
+             m += sinfo.get_chunk_size()) {Fo
           for (auto &&k: subchunks) {
             bufferlist bl0;
             r = switcher->store->read(
@@ -694,6 +694,11 @@ void ECBackend::handle_sub_read_reply(
       get_parent()->get_logger()->tinc(l_osd_stretch_ec_cross_zone_read_lat, lat);
       get_parent()->get_logger()->hinc(l_osd_stretch_ec_cross_zone_read_lat_hist,
                                        lat.to_nsec(), recv_bytes);
+
+      object_stat_sum_t delta;
+      delta.num_ec_cross_zone_read_ops = 1;
+      delta.num_ec_cross_zone_read_bytes = recv_bytes;
+      get_parent()->get_eclistener()->add_ec_cross_zone_stats(delta);
     }
   }
   for (auto &&[hoid, req]: rop.to_read) {

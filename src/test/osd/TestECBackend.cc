@@ -240,6 +240,10 @@ public:
 
   }
 
+  void add_ec_cross_zone_stats(const object_stat_sum_t &delta) override {
+
+  }
+
   bool is_missing_object(const hobject_t &oid) const override {
     return false;
   }
