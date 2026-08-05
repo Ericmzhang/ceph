@@ -9,6 +9,7 @@ import { NotificationType } from '~/app/shared/enum/notification-type.enum';
 import { AuthStorageService } from '~/app/shared/services/auth-storage.service';
 import { NotificationService } from '~/app/shared/services/notification.service';
 import { TelemetryNotificationService } from '~/app/shared/services/telemetry-notification.service';
+import { environment } from '~/environments/environment';
 
 @Component({
   selector: 'cd-telemetry-notification',
@@ -21,6 +22,8 @@ export class TelemetryNotificationComponent implements OnInit, OnDestroy {
   notificationSeverity = 'info';
   private visibilitySubscription: Subscription;
 
+  environment = environment;
+
   constructor(
     private mgrModuleService: MgrModuleService,
     private authStorageService: AuthStorageService,
@@ -30,6 +33,9 @@ export class TelemetryNotificationComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
+    if (this.environment.build === 'ibm') {
+      return;
+    }
     this.visibilitySubscription = this.telemetryNotificationService.update.subscribe(
       (visible: boolean) => {
         this.displayNotification = visible;
