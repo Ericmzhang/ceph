@@ -91,7 +91,6 @@ export interface CephServiceAdditionalSpec {
   ssl_certificate_key: string;
   ssl_protocols: string[];
   ssl_ciphers: string[];
-  certificate_source: string;
   custom_sans?: string[];
   zonegroup_hostnames?: string[];
   wildcard_enabled?: boolean;
