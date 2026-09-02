@@ -1160,8 +1160,7 @@ void ECCommon::RMWPipeline::cache_ready(Op &op) {
       using Write = PGTransaction::ObjectOperation::BufferUpdate::Write;
       uint64_t replicate_bytes = 0;
       for (auto &[hoid, obj_op] : zop.t->op_map) {
-        for (auto it = obj_op.buffer_updates.begin();
-             it != obj_op.buffer_updates.end(); ++it) {
+        for (auto it = obj_op.buffer_updates.begin(); it != obj_op.buffer_updates.end(); ++it) {
           if (auto *w = std::get_if<Write>(&it.get_val())) {
             replicate_bytes += w->buffer.length();
           }
