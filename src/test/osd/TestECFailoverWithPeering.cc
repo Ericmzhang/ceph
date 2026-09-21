@@ -286,6 +286,58 @@ TEST_P(TestECFailoverWithPeering, RecoveryWithPeering) {
   ASSERT_TRUE(listener_ptr->activate_complete_called)
     << "on_activate_complete should have been called during peering";
 }
+
+TEST_P(TestECFailoverWithPeering, MultiZoneFailoverWithPeering) {
+  const auto& config = GetParam();
+
+  // Skip test if zones are not configured or only one zone
+  if (config.num_zones <= 1) {
+    GTEST_SKIP() << "MultiZoneFailoverWithPeering test requires num_zones > 1";
+  }
+
+  ASSERT_TRUE(all_shards_active()) << "Initial peering must complete";
+
+  const std::string obj_name = "test_multizone_failover";
+  const std::string test_data = "Data for multi-zone failover test";
+
+  // Write data before failure and verify
+  create_and_write_verify(obj_name, test_data);
+
+  // Fail the first k+m OSDs (entire first zone)
+  // With num_zones=2 and k=4, m=2, we have 12 total OSDs
+  // Failing the first 6 (k+m) simulates losing an entire zone
+  std::vector<int> failed_osds;
+  for (int i = 0; i < k + m; i++) {
+    failed_osds.push_back(i);
+  }
+
+  // Use fixture helper to mark multiple OSDs as down
+  mark_osds_down(failed_osds);
+
+  // Verify the primary has changed (OSD 0 was in the failed zone)
+  int new_primary_shard = get_primary_shard_from_osdmap();
+  ASSERT_GE(new_primary_shard, k + m)
+    << "New primary should be from the second zone (>= k+m)";
+
+  auto* primary_ps = get_primary_test_pg()->get_peering_state();
+  for (int failed_osd : failed_osds) {
+    ASSERT_TRUE(primary_ps->get_acting_recovery_backfill().count(
+      pg_shard_t(failed_osd, shard_id_t(failed_osd))) == 0)
+      << "Failed OSD " << failed_osd << " should not be in acting set";
+  }
+
+  std::string primary_state = get_state_name(new_primary_shard);
+  ASSERT_TRUE(primary_state.find("Peering") != std::string::npos ||
+              primary_state.find("Active") != std::string::npos ||
+              primary_state.find("Recovery") != std::string::npos)
+    << "New primary should be operational, got: " << primary_state;
+
+  // Perform degraded read after failover
+  // With 2 zones of k=4,m=2 each, losing one zone (6 OSDs) leaves us with
+  // 6 remaining OSDs, which is exactly k+m and sufficient for EC reconstruction
+  verify_object(obj_name);
+}
+
 TEST_P(TestECFailoverWithPeering, ZeroSizeObjectWithAttributesRecovery) {
   //  ASSERT_TRUE(all_shards_active()) << "Initial peering must complete";
 
@@ -377,6 +429,9 @@ const std::vector<BackendConfig> kECPeeringConfigs = {
   {PGBackendTestFixture::EC, "jerasure", "reed_sol_van", pg_pool_t::FLAG_EC_OVERWRITES | pg_pool_t::FLAG_EC_OPTIMIZATIONS,  16384, 4, 2, 1, "EC_Jerasure_Opt_k4m2_su16k"},
   {PGBackendTestFixture::EC, "jerasure", "reed_sol_van", pg_pool_t::FLAG_EC_OVERWRITES | pg_pool_t::FLAG_EC_OPTIMIZATIONS,  4096,  2, 1, 1, "EC_Jerasure_Opt_k2m1_su4k"},
   {PGBackendTestFixture::EC, "jerasure", "reed_sol_van", pg_pool_t::FLAG_EC_OVERWRITES | pg_pool_t::FLAG_EC_OPTIMIZATIONS,  4096,  8, 3, 1, "EC_Jerasure_Opt_k8m3_su4k"},
+
+  // Multi-zone configuration (num_zones = 2)
+  {PGBackendTestFixture::EC, "isa", "reed_sol_van", pg_pool_t::FLAG_EC_OVERWRITES | pg_pool_t::FLAG_EC_OPTIMIZATIONS,  4096,  4, 2, 2, "EC_ISA_Opt_k4m2_zones2"},
 };
 
 }  // namespace
