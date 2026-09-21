@@ -86,8 +86,7 @@ public:
   void event_activate_map();
   
   void set_config(const std::string& option, const std::string& value);
-
-  // Set pg log target length on all listeners to drive log trimming.
+// Set pg log target length on all listeners to drive log trimming.
   // Combine with enable_log_trimming = true.
   void set_target_pg_log_entries(unsigned n);
 
