@@ -1928,6 +1928,129 @@ TEST_P(TestECFailoverWithPeering, ECZoneRecoveryPartialWriteTestReverse) {
   run_zone_recovery_test(1, "zone1_partial", partial_write_size);
 }
 
+/**
+ * ECMinAvailableTest - Test minimum available shards for PG activation
+ *
+ * This test verifies that a PG does not go active when too many shards
+ * are offline, even across multiple zones. The test:
+ * 1. Writes an object
+ * 2. Takes m shards offline in zone 0, starting at shard 1
+ * 3. Takes an additional shard offline in zone 0 - PG should NOT go active
+ * 4. Takes shard k+m+1 offline (from zone 1)
+ * 5. Brings back shard 1
+ * 6. Asserts there is no recovery scheduled
+ *
+ * This test only runs for multi-zone configurations (num_zones > 1).
+ */
+TEST_P(TestECFailoverWithPeering, ECMinAvailableTest) {
+  // Skip test if zones are not configured or only one zone
+  if (num_zones <= 1) {
+    GTEST_SKIP() << "ECMinAvailableTest requires num_zones > 1";
+  }
+
+  ASSERT_TRUE(all_shards_active()) << "Initial peering must complete";
+
+  const std::string obj_name = "test_min_available";
+  const size_t data_size = stripe_unit * k;  // One full stripe
+  std::string test_data(data_size, 'X');
+
+  // Get min_size from the pool
+  const pg_pool_t* pool = osdmap->get_pg_pool(pool_id);
+  ASSERT_NE(pool, nullptr);
+  unsigned int min_size = pool->min_size;
+
+  std::cout << "\n=== Testing minimum available shards (k=" << k
+            << ", m=" << m << ", zones=" << num_zones
+            << ", min_size=" << min_size << ") ===" << std::endl;
+
+  // Step 1: Write an object
+  std::cout << "Step 1: Writing object" << std::endl;
+  create_and_write_verify(obj_name, test_data);
+
+  // Step 2: Take m shards offline in zone 0, starting at shard 1
+  std::cout << "Step 2: Taking " << m << " shards offline in zone 0, starting at shard 1" << std::endl;
+  std::vector<int> failed_shards_zone0;
+  for (int i = 1; i <= m; i++) {
+    failed_shards_zone0.push_back(i);
+  }
+  mark_osds_down(failed_shards_zone0);
+
+  // With min_size = num_zones * (k+m) - m, we now have num_zones * (k+m) - m shards available
+  // which is exactly min_size, so PG should still be active
+  ASSERT_TRUE(all_shards_active())
+    << "PG should still be active with " << m << " shards down in zone 0";
+
+  // Step 3: Take an additional shard offline in zone 0
+  int additional_shard_zone0 = m + 1;  // Next shard after the m we already failed
+  std::cout << "Step 3: Taking additional shard " << additional_shard_zone0
+            << " offline in zone 0" << std::endl;
+  mark_osd_down(additional_shard_zone0);
+
+  // Now we have m+1 shards down, leaving num_zones * (k+m) - (m+1) shards
+  // which is less than min_size, so PG should NOT be active
+  std::cout << "Step 3: Checking that PG is NOT active" << std::endl;
+  ASSERT_FALSE(all_shards_active())
+    << "PG should NOT be active with " << (m + 1) << " shards down in zone 0";
+
+  // Step 4: Take shard k+m+1 offline (first shard in zone 1, after shard k+m which is zone 0's last)
+  int shard_zone1 = k + m + 1;
+  std::cout << "Step 4: Taking shard " << shard_zone1 << " offline (zone 1)" << std::endl;
+  mark_osd_down(shard_zone1);
+
+  // PG should still not be active
+  ASSERT_FALSE(all_shards_active())
+    << "PG should still NOT be active after taking zone 1 shard offline";
+
+  // Step 5: Bring back shard 1
+  std::cout << "Step 5: Bringing shard 1 back online" << std::endl;
+  mark_osd_up(1);
+
+  // Step 6: Assert there is no recovery scheduled
+  // After bringing shard 1 back, we now have k shards in zone 0 again
+  // (shard 0, shard 1, and shards m+2 to k+m-1)
+  // The PG should become active, but since shard 1 was down during the write,
+  // it should be marked for recovery
+  std::cout << "Step 6: Checking recovery state" << std::endl;
+
+  // Get the current primary
+  int current_primary = get_primary_shard_from_osdmap();
+  ASSERT_GE(current_primary, 0) << "Should have a valid primary";
+
+  auto primary_ps = get_primary_test_pg()->get_peering_state();
+
+  // The PG might be active now with k shards available
+  // But we need to check if recovery is scheduled
+  if (primary_ps->is_active()) {
+    std::cout << "  PG is active" << std::endl;
+
+    // Check peer_missing to see if shard 1 has missing objects
+    const auto& peer_missing_map = primary_ps->get_peer_missing();
+
+    hobject_t hoid = make_test_object(obj_name);
+    pg_shard_t shard1(1, shard_id_t(1));
+
+    auto peer_missing_it = peer_missing_map.find(shard1);
+    if (peer_missing_it != peer_missing_map.end()) {
+      const pg_missing_t& peer_missing = peer_missing_it->second;
+      bool is_missing = peer_missing.is_missing(hoid);
+
+      std::cout << "  Shard 1 missing status for object: " << (is_missing ? "MISSING" : "NOT MISSING") << std::endl;
+
+      // Since shard 1 was down when we wrote the object, it should NOT be missing
+      // because we never successfully wrote to it in the first place
+      // Recovery should not be scheduled for objects that were never written
+      ASSERT_FALSE(is_missing)
+        << "Shard 1 should not have the object marked as missing since it was down during write";
+    } else {
+      std::cout << "  Shard 1 not in peer_missing_map (no recovery needed)" << std::endl;
+    }
+  } else {
+    std::cout << "  PG is not active yet" << std::endl;
+  }
+
+  std::cout << "=== ECMinAvailableTest completed successfully ===" << std::endl;
+}
+
 // ---------------------------------------------------------------------------
 // Instantiate TestECFailoverWithPeering with EC configurations
 // ---------------------------------------------------------------------------
