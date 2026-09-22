@@ -279,12 +279,6 @@ ECCommon::ReadPipeline::select_shards_for_read(
   auto zone = sinfo.get_shard_zone(get_parent()->whoami_shard().shard);
   get_all_avail_shards(hoid, have, shards, for_recovery, zone, allow_remote_zone, error_shards);
 
-  std::unique_ptr<shard_id_map<vector<pair<int, int>>>> need_sub_chunks =
-      nullptr;
-  if (sinfo.supports_sub_chunks()) {
-    need_sub_chunks = std::make_unique<shard_id_map<vector<pair<int, int>>>>(
-      sinfo.get_k_plus_m());
-  }
   shard_id_set need_set;
 
   int r = 0;
@@ -297,11 +291,9 @@ ECCommon::ReadPipeline::select_shards_for_read(
     shard_id_set want_for_plugin = want;
     shard_id_t kth = *kth_iter;
     want_for_plugin.erase_range(kth, sinfo.get_k_plus_m() - (int)kth);
-    r = ec_impl->minimum_to_decode(want_for_plugin, have, need_set,
-                                     need_sub_chunks.get());
+    r = ec_impl->minimum_to_decode(want_for_plugin, have, need_set, nullptr);
   } else {
-    r = ec_impl->minimum_to_decode(want, have, need_set,
-                                     need_sub_chunks.get());
+    r = ec_impl->minimum_to_decode(want, have, need_set, nullptr);
   }
 
   if (r < 0) {
@@ -342,13 +334,6 @@ int ECCommon::ReadPipeline::  get_min_avail_to_read_shards(
   auto& [have, shards, need_set] = result.value();
 
   if (do_redundant_reads) {
-    if (need_sub_chunks) {
-      vector<pair<int, int>> subchunks_list;
-      subchunks_list.push_back(make_pair(0, ec_impl->get_sub_chunk_count()));
-      for (auto &&i: have) {
-        (*need_sub_chunks)[i] = subchunks_list;
-      }
-    }
     need_set.insert(have);
   }
 
@@ -386,9 +371,6 @@ int ECCommon::ReadPipeline::  get_min_avail_to_read_shards(
     shard_id_t shard_id(shard);
     extent_set extents = extra_extents;
     shard_read_t shard_read;
-    if (need_sub_chunks) {
-      shard_read.subchunk = need_sub_chunks->at(shard_id);
-    }
     shard_read.pg_shard = shards[shard_id];
 
     if (read_request.shard_want_to_read.contains(shard)) {
