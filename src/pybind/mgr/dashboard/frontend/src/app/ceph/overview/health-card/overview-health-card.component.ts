@@ -20,25 +20,29 @@ import { RouterModule } from '@angular/router';
 import { ComponentsModule } from '~/app/shared/components/components.module';
 import { SummaryService } from '~/app/shared/services/summary.service';
 import { Summary } from '~/app/shared/models/summary.model';
-import { combineLatest, Observable, of } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { PipesModule } from '~/app/shared/pipes/pipes.module';
-import { UpgradeInfoInterface } from '~/app/shared/models/upgrade.interface';
-import { UpgradeService } from '~/app/shared/api/upgrade.service';
 import { catchError, filter, map, shareReplay, startWith, switchMap } from 'rxjs/operators';
-import { HealthCardTabSection, HealthCardVM } from '~/app/shared/models/overview';
+import {
+  HealthCardTabSection,
+  HealthCardVM,
+  HardwareCardVM,
+  buildHardwareCardVM
+} from '~/app/shared/models/overview';
+import { AlertmanagerAlert, AlertState } from '~/app/shared/models/prometheus-alerts';
 import { HardwareService } from '~/app/shared/api/hardware.service';
 import { HealthService } from '~/app/shared/api/health.service';
 import { MgrModuleService } from '~/app/shared/api/mgr-module.service';
 import { RefreshIntervalService } from '~/app/shared/services/refresh-interval.service';
 import { AuthStorageService } from '~/app/shared/services/auth-storage.service';
-import { HardwareNameMapping } from '~/app/shared/enum/hardware.enum';
 import { GaugeChartComponent } from '@carbon/charts-angular';
+import { CallHomeService } from '~/app/shared/api/call-home.service';
+import { StorageInsightsService } from '~/app/shared/api/storage-insights.service';
+import { environment } from '~/environments/environment';
+import { PrometheusAlertService } from '~/app/shared/services/prometheus-alert.service';
 
-type OverviewHealthData = {
-  summary: Summary;
-  upgrade: UpgradeInfoInterface | null;
-};
+const PG_ALERT_PREFIX = 'CephPG';
 
 interface HealthItemConfig {
   key: 'mon' | 'mgr' | 'osd' | 'hosts';
@@ -46,15 +50,6 @@ interface HealthItemConfig {
   prefix?: string;
   i18n?: boolean;
 }
-
-type HwKey = keyof typeof HardwareNameMapping;
-
-type HwRowVM = {
-  key: HwKey;
-  label: string;
-  ok: number;
-  error: number;
-};
 
 @Component({
   selector: 'cd-overview-health-card',
@@ -79,13 +74,16 @@ type HwRowVM = {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class OverviewHealthCardComponent {
+  environment = environment;
   private readonly summaryService = inject(SummaryService);
-  private readonly upgradeService = inject(UpgradeService);
   private readonly healthService = inject(HealthService);
   private readonly hardwareService = inject(HardwareService);
   private readonly mgrModuleService = inject(MgrModuleService);
   private readonly refreshIntervalService = inject(RefreshIntervalService);
   private readonly authStorageService = inject(AuthStorageService);
+  private readonly callHomeService = inject(CallHomeService);
+  private readonly storageInsightsService = inject(StorageInsightsService);
+  private readonly prometheusAlertService = inject(PrometheusAlertService);
 
   @Input({ required: true }) vm!: HealthCardVM;
   @Output() viewIncidents = new EventEmitter<void>();
@@ -116,15 +114,9 @@ export class OverviewHealthCardComponent {
 
   private readonly permissions = this.authStorageService.getPermissions();
 
-  readonly data$: Observable<OverviewHealthData> = combineLatest([
-    this.summaryService.summaryData$.pipe(filter((summary): summary is Summary => !!summary)),
-    this.permissions?.configOpt?.read
-      ? this.upgradeService.listCached().pipe(
-          startWith(null as UpgradeInfoInterface | null),
-          catchError(() => of(null))
-        )
-      : of(null)
-  ]).pipe(map(([summary, upgrade]) => ({ summary, upgrade })));
+  readonly summary$: Observable<Summary> = this.summaryService.summaryData$.pipe(
+    filter((summary): summary is Summary => !!summary)
+  );
 
   readonly enabled$: Observable<boolean> = this.permissions?.configOpt?.read
     ? this.mgrModuleService.getConfig('cephadm').pipe(
@@ -146,18 +138,8 @@ export class OverviewHealthCardComponent {
     shareReplay({ bufferSize: 1, refCount: true })
   );
 
-  private readonly hardwareRows$: Observable<HwRowVM[] | null> = this.hardwareSummary$.pipe(
-    map((hw) => {
-      const category = hw?.total?.category;
-      if (!category) return null;
-
-      return (Object.keys(HardwareNameMapping) as HwKey[]).map((key) => ({
-        key,
-        label: HardwareNameMapping[key],
-        ok: Number(category?.[key]?.ok ?? 0),
-        error: Number(category?.[key]?.error ?? 0)
-      }));
-    }),
+  readonly hardwareData$: Observable<HardwareCardVM | null> = this.hardwareSummary$.pipe(
+    map((hw) => buildHardwareCardVM(hw)),
     shareReplay({ bufferSize: 1, refCount: true })
   );
 
@@ -167,16 +149,29 @@ export class OverviewHealthCardComponent {
     shareReplay({ bufferSize: 1, refCount: true })
   );
 
-  readonly sections$: Observable<HwRowVM[][] | null> = this.hardwareRows$.pipe(
-    map((rows) => {
-      if (!rows) return null;
+  readonly callHomeEnabled$: Observable<boolean> = this.permissions?.configOpt?.read
+    ? this.callHomeService.getCallHomeStatus().pipe(
+        catchError(() => of(false)),
+        shareReplay({ bufferSize: 1, refCount: true })
+      )
+    : of(false);
 
-      const result: HwRowVM[][] = [];
-      for (let i = 0; i < rows.length; i += 2) {
-        result.push(rows.slice(i, i + 2));
-      }
-      return result.slice(0, 3);
-    }),
-    shareReplay({ bufferSize: 1, refCount: true })
+  readonly pgAlertCount$ = this.prometheusAlertService.totalAlerts$.pipe(
+    map(
+      () =>
+        this.prometheusAlertService.alerts.filter(
+          (alert: AlertmanagerAlert) =>
+            alert.status.state === AlertState.ACTIVE &&
+            alert.labels.alertname?.startsWith(PG_ALERT_PREFIX)
+        ).length
+    ),
+    startWith(0)
   );
+
+  readonly storageInsightsEnabled$: Observable<boolean> = this.permissions?.configOpt?.read
+    ? this.storageInsightsService.getStorageInsightsStatus().pipe(
+        catchError(() => of(false)),
+        shareReplay({ bufferSize: 1, refCount: true })
+      )
+    : of(false);
 }

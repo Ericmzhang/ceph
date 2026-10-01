@@ -97,7 +97,9 @@ export class ErrorComponent implements OnDestroy, OnInit {
       this.module_name = history.state.module_name;
       this.navigateTo = history.state.navigate_to;
       this.component = history.state.component;
-      this.docUrl = this.docService.urlGenerator(this.section);
+      this.docService.subscribeOnce(this.section, (url: string) => {
+        this.docUrl = url;
+      });
     } catch (error) {
       this.router.navigate(['/error']);
     }
@@ -110,6 +112,6 @@ export class ErrorComponent implements OnDestroy, OnInit {
   }
 
   enableModule(): void {
-    this.mgrModuleService.updateModuleState(this.module_name, false, null, this.navigateTo);
+    this.mgrModuleService.updateModuleState(this.module_name, false, undefined, this.navigateTo);
   }
 }

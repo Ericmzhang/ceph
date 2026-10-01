@@ -83,6 +83,7 @@ export interface CephServiceAdditionalSpec {
   server_cert: string;
   server_key: string;
   rgw_frontend_ssl_certificate: string;
+  certificate_source: string;
   ssl: boolean;
   ssl_cert: string;
   ssl_certificate: string;
@@ -90,7 +91,6 @@ export interface CephServiceAdditionalSpec {
   ssl_certificate_key: string;
   ssl_protocols: string[];
   ssl_ciphers: string[];
-  certificate_source: string;
   custom_sans?: string[];
   zonegroup_hostnames?: string[];
   wildcard_enabled?: boolean;
@@ -111,7 +111,11 @@ export interface CephServiceAdditionalSpec {
   client_secret: string;
   oidc_issuer_url: string;
   enable_auth: boolean;
+  encryption_key?: string;
   qat: QatSepcs;
+  args: any[]; // any[] because the custom container can have any arguments passed to it.
+  envs: any[]; // any[] because the custom container can have any environment variables passed to it.
+  files: any[]; // any[] because the custom container can have any files passed to it.
 }
 
 export interface CephServicePlacement {
@@ -129,6 +133,12 @@ export interface QatSepcs {
 export enum CertificateType {
   internal = 'internal',
   external = 'external'
+}
+
+export enum CertMode {
+  externalOnly = 'externalOnly',
+  both = 'both',
+  internalOnly = 'internalOnly'
 }
 
 export enum QatOptions {

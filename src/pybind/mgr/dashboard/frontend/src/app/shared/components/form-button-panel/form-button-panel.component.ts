@@ -45,6 +45,7 @@ export class FormButtonPanelComponent implements OnInit {
   submitBtnType: 'primary' | 'danger';
 
   hasModalOutlet = false;
+  title = '';
 
   constructor(
     private location: Location,

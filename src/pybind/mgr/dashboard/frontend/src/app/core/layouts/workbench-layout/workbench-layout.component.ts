@@ -1,5 +1,5 @@
 import { Component, HostBinding, OnDestroy, OnInit } from '@angular/core';
-import { ActivatedRouteSnapshot, NavigationEnd, Router } from '@angular/router';
+import { ActivatedRouteSnapshot, NavigationEnd, Router, RoutesRecognized } from '@angular/router';
 
 import { Observable, Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
@@ -16,6 +16,9 @@ import {
   FeatureTogglesMap,
   FeatureTogglesService
 } from '~/app/shared/services/feature-toggles.service';
+import { CallHomeNotificationService } from '~/app/shared/services/call-home-notification.service';
+import { StorageInsightsNotificationService } from '~/app/shared/services/storage-insights-notification.service';
+import { environment } from '~/environments/environment';
 import _ from 'lodash';
 
 @Component({
@@ -29,9 +32,12 @@ export class WorkbenchLayoutComponent implements OnInit, OnDestroy {
   notifications: string[] = [];
   private subs = new Subscription();
   permissions: Permissions;
+  environment = environment;
   pageHeaderTitle: string | null = null;
+  pageHeaderSubtitle: string | null = null;
   pageHeaderDescription: string | null = null;
   enabledFeature$: Observable<FeatureTogglesMap>;
+  pageHeaderHidden = false;
 
   @HostBinding('class') get class(): string {
     return 'top-notification-' + this.notifications.length;
@@ -46,19 +52,41 @@ export class WorkbenchLayoutComponent implements OnInit, OnDestroy {
     private authStorageService: AuthStorageService,
     private telemetryNotificationService: TelemetryNotificationService,
     private motdNotificationService: MotdNotificationService,
-    private featureTogglesService: FeatureTogglesService
+    private featureTogglesService: FeatureTogglesService,
+    private callHomeNotificationService: CallHomeNotificationService,
+    private storageInsightsNotificationService: StorageInsightsNotificationService
   ) {
     this.permissions = this.authStorageService.getPermissions();
     this.enabledFeature$ = this.featureTogglesService.get();
   }
 
   ngOnInit() {
+    this.subs.add(this.summaryService.startPolling());
+    this.subs.add(this.taskManagerService.init(this.summaryService));
     if (this.permissions.configOpt.read) {
       this.subs.add(this.multiClusterService.startPolling());
       this.subs.add(this.multiClusterService.startClusterTokenStatusPolling());
+
+      if (this.environment.build === 'ibm') {
+        this.subs.add(
+          this.callHomeNotificationService.remindLaterOn$.subscribe((visible: boolean) => {
+            this.showTopNotification('callHomeNotificationEnabled', visible);
+          })
+        );
+        this.subs.add(
+          this.storageInsightsNotificationService.remindLaterOn$.subscribe((visible: boolean) => {
+            this.showTopNotification('storagteInsightsEnabled', visible);
+          })
+        );
+      } else {
+        // disabling telemetry notification in ibm builds
+        this.subs.add(
+          this.telemetryNotificationService.update.subscribe((visible: boolean) => {
+            this.showTopNotification('telemetryNotificationEnabled', visible);
+          })
+        );
+      }
     }
-    this.subs.add(this.summaryService.startPolling());
-    this.subs.add(this.taskManagerService.init(this.summaryService));
 
     this.subs.add(
       this.authStorageService.isPwdDisplayed$.subscribe((isDisplayed) => {
@@ -66,21 +94,35 @@ export class WorkbenchLayoutComponent implements OnInit, OnDestroy {
       })
     );
     this.subs.add(
-      this.telemetryNotificationService.update.subscribe((visible: boolean) => {
-        this.showTopNotification('telemetryNotificationEnabled', visible);
-      })
-    );
-    this.subs.add(
       this.motdNotificationService.motd$.subscribe((motd: any) => {
         this.showTopNotification('motdNotificationEnabled', _.isPlainObject(motd));
       })
     );
+    if (this.environment.build === 'ibm') {
+      this.subs.add(
+        this.callHomeNotificationService.remindLaterOn$.subscribe((visible: boolean) => {
+          this.showTopNotification('callHomeNotificationEnabled', visible);
+        })
+      );
+      this.subs.add(
+        this.storageInsightsNotificationService.remindLaterOn$.subscribe((visible: boolean) => {
+          this.showTopNotification('storagteInsightsEnabled', visible);
+        })
+      );
+    } else {
+      // disabling telemetry notification in ibm builds
+      this.subs.add(
+        this.telemetryNotificationService.update.subscribe((visible: boolean) => {
+          this.showTopNotification('telemetryNotificationEnabled', visible);
+        })
+      );
+    }
     this.faviconService.init();
 
     this.updatePageHeaderFromRoute();
     this.subs.add(
       this.router.events
-        .pipe(filter((e) => e instanceof NavigationEnd))
+        .pipe(filter((e) => e instanceof NavigationEnd || e instanceof RoutesRecognized))
         .subscribe(() => this.updatePageHeaderFromRoute())
     );
   }
@@ -90,11 +132,54 @@ export class WorkbenchLayoutComponent implements OnInit, OnDestroy {
     while (route?.firstChild) {
       route = route.firstChild;
     }
+
+    const hiddenRoute = this.findRouteWithData(route, 'pageHeaderHidden');
+    if (hiddenRoute?.routeConfig?.data?.['pageHeaderHidden']) {
+      this.pageHeaderHidden = true;
+      this.pageHeaderTitle = null;
+      this.pageHeaderSubtitle = null;
+      this.pageHeaderDescription = null;
+      return;
+    }
+
+    this.pageHeaderHidden = false;
+
+    const titleFromParamRoute = this.findRouteWithData(route, 'pageHeaderTitleFromParam');
+    const titleFromParam = titleFromParamRoute?.routeConfig?.data?.['pageHeaderTitleFromParam'] as
+      | string
+      | undefined;
+
+    if (titleFromParam && titleFromParamRoute?.params[titleFromParam]) {
+      try {
+        this.pageHeaderTitle = decodeURIComponent(titleFromParamRoute.params[titleFromParam]);
+      } catch {
+        this.pageHeaderTitle = titleFromParamRoute.params[titleFromParam];
+      }
+      this.pageHeaderSubtitle = null;
+      this.pageHeaderDescription = null;
+      return;
+    }
+
     const pageHeader = route?.routeConfig?.data?.['pageHeader'] as
-      | { title?: string; description?: string }
+      | { title?: string; subtitle?: string; description?: string }
       | undefined;
     this.pageHeaderTitle = pageHeader?.title ?? null;
+    this.pageHeaderSubtitle = pageHeader?.subtitle ?? null;
     this.pageHeaderDescription = pageHeader?.description ?? null;
+  }
+
+  private findRouteWithData(
+    route: ActivatedRouteSnapshot | null,
+    key: string
+  ): ActivatedRouteSnapshot | null {
+    let current = route;
+    while (current) {
+      if (current.routeConfig?.data?.[key]) {
+        return current;
+      }
+      current = current.parent;
+    }
+    return null;
   }
 
   showTopNotification(name: string, isDisplayed: boolean) {

@@ -3,8 +3,11 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject, Subscription } from 'rxjs';
 import { filter, first, map } from 'rxjs/operators';
 
-import { CephReleaseNamePipe } from '../pipes/ceph-release-name.pipe';
 import { SummaryService } from './summary.service';
+import { environment } from '~/environments/environment';
+import { getVersionAndRelease } from '../helpers/utils';
+
+const MIN_VER_NEW_IBM_FORMAT = 9.9;
 
 @Injectable({
   providedIn: 'root'
@@ -13,54 +16,94 @@ export class DocService {
   private releaseDataSource = new BehaviorSubject<string>(null);
   releaseData$ = this.releaseDataSource.asObservable();
 
-  constructor(
-    private summaryservice: SummaryService,
-    private cephReleaseNamePipe: CephReleaseNamePipe
-  ) {
+  constructor(private summaryservice: SummaryService) {
     this.summaryservice.subscribeOnce((summary) => {
-      const releaseName = this.cephReleaseNamePipe.transform(summary.version);
-      this.releaseDataSource.next(releaseName);
+      const releaseVersion = getVersionAndRelease(summary?.version)?.release;
+      this.releaseDataSource.next(releaseVersion);
     });
   }
 
-  urlGenerator(section: string, release = 'main'): string {
-    const docVersion = release === 'main' ? 'latest' : release;
-    const domain = `https://docs.ceph.com/en/${docVersion}/`;
-    const domainCeph = `https://ceph.io`;
+  urlGenerator(section: string, releaseVersion: string = null): string {
+    // Sanitization for z release
+    const docVersion = releaseVersion?.split('z')?.[0];
+    let sections: { [key: string]: string } = {};
 
-    const sections = {
-      iscsi: `${domain}mgr/dashboard/#enabling-iscsi-management`,
-      prometheus: `${domain}mgr/dashboard/#enabling-prometheus-alerting`,
-      'nfs-ganesha': `${domain}mgr/dashboard/#configuring-nfs-ganesha-in-the-dashboard`,
-      'rgw-nfs': `${domain}radosgw/nfs`,
-      rgw: `${domain}mgr/dashboard/#enabling-the-object-gateway-management-frontend`,
-      'rgw-multisite': `${domain}/radosgw/multisite/#failover-and-disaster-recovery`,
-      multisite: `${domain}/radosgw/multisite`,
-      dashboard: `${domain}mgr/dashboard`,
-      grafana: `${domain}mgr/dashboard/#enabling-the-embedding-of-grafana-dashboards`,
-      orch: `${domain}mgr/orchestrator`,
-      pgs: `${domain}/rados/operations/placement-groups/#choosing-number-of-placement-groups`,
-      help: `${domainCeph}/en/users/`,
-      security: `${domainCeph}/en/security/`,
-      trademarks: `${domainCeph}/en/trademarks/`,
-      'dashboard-landing-page-status': `${domain}mgr/dashboard/#dashboard-landing-page-status`,
-      'dashboard-landing-page-performance': `${domain}mgr/dashboard/#dashboard-landing-page-performance`,
-      'dashboard-landing-page-capacity': `${domain}mgr/dashboard/#dashboard-landing-page-capacity`,
-      'dashboard-side-panel': `${domain}/rados/operations/health-checks/`
-    };
+    if (environment.build === 'ibm') {
+      // 9.0 introduced newer build (9.9.0.0) and doc format (9.9.0)
+      const ibmDocVersion =
+        parseFloat(docVersion) >= MIN_VER_NEW_IBM_FORMAT
+          ? docVersion?.replace(/\.0$/, '')
+          : docVersion;
+      const domain = `https://www.ibm.com/docs/storage-ceph/${ibmDocVersion}?topic=`;
+      const domainIBM = `https://www.ibm.com/support/customer/csol/terms/`;
 
+      sections = {
+        iscsi: `${domain}dashboard-management-iscsi-functions-using-ceph`,
+        prometheus: `${domain}dashboard-management-alerts-ceph`,
+        'nfs-ganesha': `${domain}dashboard-management-nfs-ganesha-exports-ceph`,
+        'rgw-nfs': `${domain}dashboard-management-nfs-ganesha-exports-ceph`,
+        rgw: `${domain}dashboard-management-ceph-object-gateway-using`,
+        'rgw-multisite': `${domain}zone-failover-disaster-recovery`,
+        multisite: `${domain}gateway-multi-site-configuration-administration`,
+        dashboard: `${domain}dashboard`,
+        grafana: `${domain}alerts-enabling-monitoring-stack`,
+        orch: `${domain}operations-introduction-ceph-orchestrator`,
+        pgs: `https://access.redhat.com/labs/cephpgc/`,
+        help: domain,
+        terms: `${domainIBM}?id=L-KDIY-CJHJCJ&lc=en#detail-document`,
+        privacy: `${domainIBM}?id=Z126-7870&lc=en#detail-document`,
+        'dashboard-landing-page-status': `${domain}dashboard-understanding-landing-page-ceph`,
+        'dashboard-landing-page-performance': `${domain}dashboard-understanding-landing-page-ceph`,
+        'dashboard-landing-page-capacity': `${domain}dashboard-understanding-landing-page-ceph`,
+        'dashboard-side-panel': `${domain}/rados/operations/health-checks/`,
+        'managing-alerts': `${domain}dashboard-managing-alerts`
+      };
+    } else {
+      // redhat release take doc version as 9 when release is 9.0 or 9.1
+      const redHatVersion = docVersion?.split('.')?.[0];
+      const domain = `https://docs.redhat.com/en/documentation/red_hat_ceph_storage/${redHatVersion}/html/`;
+      const domainRedHat = `https://www.redhat.com/en/about/`;
+
+      sections = {
+        iscsi: `${domain}dashboard_guide/management-of-block-devices-using-the-ceph-dashboard#management-of-iscsi-functions-on-the-ceph-dashboard`,
+        prometheus: `${domain}dashboard_guide/management-of-alerts-on-the-ceph-dashboard`,
+        'nfs-ganesha': `${domain}dashboard_guide/management-of-nfs-ganesha-exports-on-the-ceph-dashboard#configuring-nfs-ganesha-daemons-on-the-ceph-dashboard_dash`,
+        'rgw-nfs': `${domain}dashboard_guide/management-of-nfs-ganesha-exports-on-the-ceph-dashboard`,
+        rgw: `${domain}dashboard_guide/management-of-ceph-object-gateway-using-the-dashboard`,
+        'rgw-multisite': `${domain}object_gateway_guide/multisite-configuration-and-administration#failover-and-disaster-recovery-rgw`,
+        multisite: `${domain}object_gateway_guide/multisite-configuration-and-administration`,
+        dashboard: `${domain}dashboard_guide/`,
+        grafana: `${domain}dashboard_guide/management-of-alerts-on-the-ceph-dashboard#enabling-monitoring-stack_dash`,
+        orch: `${domain}operations_guide/introduction-to-the-ceph-orchestrator`,
+        pgs: `https://access.redhat.com/labs/cephpgc/`,
+        help: `https://docs.redhat.com/en/documentation/red_hat_ceph_storage/`,
+        terms: `${domainRedHat}all-policies-guidelines/`,
+        privacy: `${domainRedHat}privacy-policy/`,
+        'dashboard-landing-page-status': `${domain}dashboard_guide/index#understanding-the-landing-page_dash`,
+        'dashboard-landing-page-performance': `${domain}dashboard_guide/index#understanding-the-landing-page_dash`,
+        'dashboard-landing-page-capacity': `${domain}dashboard_guide/index#understanding-the-landing-page_dash`
+      };
+    }
     return sections[section];
+  }
+
+  alertDocUrl(alertName: string, releaseVersion = ''): string | null {
+    const baseUrl = this.urlGenerator('managing-alerts', releaseVersion);
+    if (!baseUrl || !alertName) {
+      return null;
+    }
+    return `${baseUrl}#${encodeURIComponent(`managing-alerts__${alertName.toLowerCase()}`)}`;
   }
 
   subscribeOnce(
     section: string,
-    next: (release: string) => void,
+    next: (url: string) => void,
     error?: (error: any) => void
   ): Subscription {
     return this.releaseData$
       .pipe(
         filter((value) => !!value),
-        map((release) => this.urlGenerator(section, release)),
+        map((release: string) => this.urlGenerator(section, release)),
         first()
       )
       .subscribe(next, error);

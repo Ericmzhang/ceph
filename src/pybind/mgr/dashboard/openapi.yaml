@@ -265,6 +265,13 @@ paths:
         name: pool_name
         schema:
           type: string
+      - allowEmptyValue: true
+        description: Optional RBD namespace. If provided, list images only from this
+          namespace within the selected pool(s).
+        in: query
+        name: namespace
+        schema:
+          type: string
       - default: 0
         description: offset
         in: query
@@ -1477,6 +1484,491 @@ paths:
       - jwt: []
       tags:
       - RbdMirroringPoolBootstrap
+  /api/block/mirroring/pool/{pool_name}/group/{group_name}:
+    delete:
+      description: "\n        Disable mirroring for a group.\n\n        :param pool_name:\
+        \ Pool name\n        :param group_name: Group name\n        :param namespace:\
+        \ Namespace (optional)\n        :param force: Force disable even if not primary\n\
+        \        "
+      parameters:
+      - description: Pool name
+        in: path
+        name: pool_name
+        required: true
+        schema:
+          type: string
+      - description: Group name
+        in: path
+        name: group_name
+        required: true
+        schema:
+          type: string
+      - allowEmptyValue: true
+        description: Namespace (optional)
+        in: query
+        name: namespace
+        schema:
+          type: string
+      - default: false
+        description: Force disable even if not primary
+        in: query
+        name: force
+        schema:
+          type: boolean
+      responses:
+        '202':
+          content:
+            application/vnd.ceph.api.v1.0+json:
+              type: object
+          description: Operation is still executing. Please check the task queue.
+        '204':
+          content:
+            application/vnd.ceph.api.v1.0+json:
+              type: object
+          description: Resource deleted.
+        '400':
+          description: Operation exception. Please check the response body for details.
+        '401':
+          description: Unauthenticated access. Please login first.
+        '403':
+          description: Unauthorized access. Please check your permissions.
+        '500':
+          description: Unexpected error. Please check the response body for the stack
+            trace.
+      security:
+      - jwt: []
+      summary: Disable mirroring for a group
+      tags:
+      - RbdMirrorGroup
+    get:
+      description: Get mirror group information.
+      parameters:
+      - description: Pool name
+        in: path
+        name: pool_name
+        required: true
+        schema:
+          type: string
+      - description: Group name
+        in: path
+        name: group_name
+        required: true
+        schema:
+          type: string
+      - allowEmptyValue: true
+        description: Namespace (optional)
+        in: query
+        name: namespace
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/vnd.ceph.api.v1.0+json:
+              schema:
+                properties:
+                  global_id:
+                    description: Global ID
+                    type: string
+                  mode:
+                    description: Mirror mode
+                    type: string
+                  primary:
+                    description: Is primary
+                    type: boolean
+                  state:
+                    description: Mirror state
+                    type: string
+                required:
+                - state
+                - mode
+                - global_id
+                - primary
+                type: object
+          description: OK
+        '400':
+          description: Operation exception. Please check the response body for details.
+        '401':
+          description: Unauthenticated access. Please login first.
+        '403':
+          description: Unauthorized access. Please check your permissions.
+        '500':
+          description: Unexpected error. Please check the response body for the stack
+            trace.
+      security:
+      - jwt: []
+      summary: Get mirror group information
+      tags:
+      - RbdMirrorGroup
+    put:
+      description: "\n        Enable mirroring for a group.\n\n        :param pool_name:\
+        \ Pool name\n        :param group_name: Group name\n        :param namespace:\
+        \ Namespace (optional)\n        :param mode: Mirror mode (default: 'snapshot')\n\
+        \        "
+      parameters:
+      - description: Pool name
+        in: path
+        name: pool_name
+        required: true
+        schema:
+          type: string
+      - description: Group name
+        in: path
+        name: group_name
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                mode:
+                  default: snapshot
+                  description: 'Mirror mode (default: ''snapshot'')'
+                  type: string
+                namespace:
+                  description: Namespace (optional)
+                  type: string
+              type: object
+      responses:
+        '200':
+          content:
+            application/vnd.ceph.api.v1.0+json:
+              type: object
+          description: Resource updated.
+        '202':
+          content:
+            application/vnd.ceph.api.v1.0+json:
+              type: object
+          description: Operation is still executing. Please check the task queue.
+        '400':
+          description: Operation exception. Please check the response body for details.
+        '401':
+          description: Unauthenticated access. Please login first.
+        '403':
+          description: Unauthorized access. Please check your permissions.
+        '500':
+          description: Unexpected error. Please check the response body for the stack
+            trace.
+      security:
+      - jwt: []
+      summary: Enable mirroring for a group
+      tags:
+      - RbdMirrorGroup
+  /api/block/mirroring/pool/{pool_name}/group/{group_name}/demote:
+    post:
+      description: "\n        Demote a group to non-primary for RBD mirroring.\n\n\
+        \        :param pool_name: Pool name\n        :param group_name: Group name\n\
+        \        :param namespace: Namespace (optional)\n        "
+      parameters:
+      - description: Pool name
+        in: path
+        name: pool_name
+        required: true
+        schema:
+          type: string
+      - description: Group name
+        in: path
+        name: group_name
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                namespace:
+                  description: Namespace (optional)
+                  type: string
+              type: object
+      responses:
+        '201':
+          content:
+            application/vnd.ceph.api.v1.0+json:
+              type: object
+          description: Resource created.
+        '202':
+          content:
+            application/vnd.ceph.api.v1.0+json:
+              type: object
+          description: Operation is still executing. Please check the task queue.
+        '400':
+          description: Operation exception. Please check the response body for details.
+        '401':
+          description: Unauthenticated access. Please login first.
+        '403':
+          description: Unauthorized access. Please check your permissions.
+        '500':
+          description: Unexpected error. Please check the response body for the stack
+            trace.
+      security:
+      - jwt: []
+      summary: Demote a mirror group to non-primary
+      tags:
+      - RbdMirrorGroup
+  /api/block/mirroring/pool/{pool_name}/group/{group_name}/promote:
+    post:
+      description: "\n        Promote a group to primary for RBD mirroring.\n\n  \
+        \      :param pool_name: Pool name\n        :param group_name: Group name\n\
+        \        :param namespace: Namespace (optional)\n        :param force: Force\
+        \ promotion even if not cleanly demoted\n        "
+      parameters:
+      - description: Pool name
+        in: path
+        name: pool_name
+        required: true
+        schema:
+          type: string
+      - description: Group name
+        in: path
+        name: group_name
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                force:
+                  default: false
+                  description: Force promotion (optional)
+                  type: boolean
+                namespace:
+                  description: Namespace (optional)
+                  type: string
+              type: object
+      responses:
+        '201':
+          content:
+            application/vnd.ceph.api.v1.0+json:
+              type: object
+          description: Resource created.
+        '202':
+          content:
+            application/vnd.ceph.api.v1.0+json:
+              type: object
+          description: Operation is still executing. Please check the task queue.
+        '400':
+          description: Operation exception. Please check the response body for details.
+        '401':
+          description: Unauthenticated access. Please login first.
+        '403':
+          description: Unauthorized access. Please check your permissions.
+        '500':
+          description: Unexpected error. Please check the response body for the stack
+            trace.
+      security:
+      - jwt: []
+      summary: Promote a mirror group to primary
+      tags:
+      - RbdMirrorGroup
+  /api/block/mirroring/pool/{pool_name}/group/{group_name}/resync:
+    post:
+      description: "\n        Force resync to primary group for RBD mirroring.\n\n\
+        \        :param pool_name: Pool name\n        :param group_name: Group name\n\
+        \        :param namespace: Namespace (optional)\n        "
+      parameters:
+      - description: Pool name
+        in: path
+        name: pool_name
+        required: true
+        schema:
+          type: string
+      - description: Group name
+        in: path
+        name: group_name
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                namespace:
+                  description: Namespace (optional)
+                  type: string
+              type: object
+      responses:
+        '201':
+          content:
+            application/vnd.ceph.api.v1.0+json:
+              type: object
+          description: Resource created.
+        '202':
+          content:
+            application/vnd.ceph.api.v1.0+json:
+              type: object
+          description: Operation is still executing. Please check the task queue.
+        '400':
+          description: Operation exception. Please check the response body for details.
+        '401':
+          description: Unauthenticated access. Please login first.
+        '403':
+          description: Unauthorized access. Please check your permissions.
+        '500':
+          description: Unexpected error. Please check the response body for the stack
+            trace.
+      security:
+      - jwt: []
+      summary: Force resync of a mirror group
+      tags:
+      - RbdMirrorGroup
+  /api/block/mirroring/pool/{pool_name}/group/{group_name}/snapshot:
+    post:
+      description: "\n        Create RBD mirroring group snapshot.\n\n        :param\
+        \ pool_name: Pool name\n        :param group_name: Group name\n        :param\
+        \ namespace: Namespace (optional)\n        :param flags: Snapshot creation\
+        \ flags\n        "
+      parameters:
+      - description: Pool name
+        in: path
+        name: pool_name
+        required: true
+        schema:
+          type: string
+      - description: Group name
+        in: path
+        name: group_name
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                flags:
+                  default: 0
+                  description: Snapshot flags (optional)
+                  type: integer
+                namespace:
+                  description: Namespace (optional)
+                  type: string
+              type: object
+      responses:
+        '201':
+          content:
+            application/vnd.ceph.api.v1.0+json:
+              type: object
+          description: Resource created.
+        '202':
+          content:
+            application/vnd.ceph.api.v1.0+json:
+              type: object
+          description: Operation is still executing. Please check the task queue.
+        '400':
+          description: Operation exception. Please check the response body for details.
+        '401':
+          description: Unauthenticated access. Please login first.
+        '403':
+          description: Unauthorized access. Please check your permissions.
+        '500':
+          description: Unexpected error. Please check the response body for the stack
+            trace.
+      security:
+      - jwt: []
+      summary: Create a mirror group snapshot
+      tags:
+      - RbdMirrorGroup
+  /api/block/mirroring/pool/{pool_name}/group/{group_name}/status:
+    get:
+      description: "\n        Get RBD mirroring status for a group.\n\n        :param\
+        \ pool_name: Pool name\n        :param group_name: Group name\n        :param\
+        \ namespace: Namespace (optional)\n        "
+      parameters:
+      - description: Pool name
+        in: path
+        name: pool_name
+        required: true
+        schema:
+          type: string
+      - description: Group name
+        in: path
+        name: group_name
+        required: true
+        schema:
+          type: string
+      - allowEmptyValue: true
+        description: Namespace (optional)
+        in: query
+        name: namespace
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/vnd.ceph.api.v1.0+json:
+              schema:
+                properties:
+                  description:
+                    description: Status description
+                    type: string
+                  global_id:
+                    description: Global ID
+                    type: string
+                  last_update:
+                    description: Last update time
+                    type: string
+                  name:
+                    description: Group name
+                    type: string
+                  peer_sites:
+                    description: Peer sites
+                    items:
+                      properties:
+                        description:
+                          description: Site description
+                          type: string
+                        last_update:
+                          description: Last update time
+                          type: string
+                        mirror_uuid:
+                          description: Mirror UUID
+                          type: string
+                        site_name:
+                          description: Site name
+                          type: string
+                        state:
+                          description: Site state
+                          type: string
+                      required:
+                      - site_name
+                      - mirror_uuid
+                      - state
+                      - description
+                      - last_update
+                      type: object
+                    type: array
+                  state:
+                    description: Mirror state
+                    type: string
+                required:
+                - name
+                - global_id
+                - state
+                - description
+                - last_update
+                - peer_sites
+                type: object
+          description: OK
+        '400':
+          description: Operation exception. Please check the response body for details.
+        '401':
+          description: Unauthenticated access. Please login first.
+        '403':
+          description: Unauthorized access. Please check your permissions.
+        '500':
+          description: Unexpected error. Please check the response body for the stack
+            trace.
+      security:
+      - jwt: []
+      summary: Get mirror group status
+      tags:
+      - RbdMirrorGroup
   /api/block/mirroring/pool/{pool_name}/peer:
     get:
       parameters:
@@ -2979,6 +3471,236 @@ paths:
       - jwt: []
       tags:
       - RbdNamespace
+  /api/call_home/accept_call_home:
+    post:
+      parameters: []
+      responses:
+        '201':
+          content:
+            application/vnd.ceph.api.v1.0+json:
+              type: object
+          description: Resource created.
+        '202':
+          content:
+            application/vnd.ceph.api.v1.0+json:
+              type: object
+          description: Operation is still executing. Please check the task queue.
+        '400':
+          description: Operation exception. Please check the response body for details.
+        '401':
+          description: Unauthenticated access. Please login first.
+        '403':
+          description: Unauthorized access. Please check your permissions.
+        '500':
+          description: Unexpected error. Please check the response body for the stack
+            trace.
+      security:
+      - jwt: []
+      summary: Confirm that the user has acknowledged the use of IBM Call Home
+      tags:
+      - CallHome
+  /api/call_home/connectivity:
+    post:
+      parameters: []
+      responses:
+        '201':
+          content:
+            application/vnd.ceph.api.v1.0+json:
+              type: object
+          description: Resource created.
+        '202':
+          content:
+            application/vnd.ceph.api.v1.0+json:
+              type: object
+          description: Operation is still executing. Please check the task queue.
+        '400':
+          description: Operation exception. Please check the response body for details.
+        '401':
+          description: Unauthenticated access. Please login first.
+        '403':
+          description: Unauthorized access. Please check your permissions.
+        '500':
+          description: Unexpected error. Please check the response body for the stack
+            trace.
+      security:
+      - jwt: []
+      tags:
+      - CallHome
+  /api/call_home/download/{report_type}:
+    get:
+      parameters:
+      - in: path
+        name: report_type
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/vnd.ceph.api.v1.0+json:
+              type: object
+          description: OK
+        '400':
+          description: Operation exception. Please check the response body for details.
+        '401':
+          description: Unauthenticated access. Please login first.
+        '403':
+          description: Unauthorized access. Please check your permissions.
+        '500':
+          description: Unexpected error. Please check the response body for the stack
+            trace.
+      security:
+      - jwt: []
+      tags:
+      - CallHome
+  /api/call_home/info:
+    get:
+      parameters: []
+      responses:
+        '200':
+          content:
+            application/vnd.ceph.api.v1.0+json:
+              type: object
+          description: OK
+        '400':
+          description: Operation exception. Please check the response body for details.
+        '401':
+          description: Unauthenticated access. Please login first.
+        '403':
+          description: Unauthorized access. Please check your permissions.
+        '500':
+          description: Unexpected error. Please check the response body for the stack
+            trace.
+      security:
+      - jwt: []
+      tags:
+      - CallHome
+  /api/call_home/status:
+    get:
+      parameters: []
+      responses:
+        '200':
+          content:
+            application/vnd.ceph.api.v1.0+json:
+              type: object
+          description: OK
+        '400':
+          description: Operation exception. Please check the response body for details.
+        '401':
+          description: Unauthenticated access. Please login first.
+        '403':
+          description: Unauthorized access. Please check your permissions.
+        '500':
+          description: Unexpected error. Please check the response body for the stack
+            trace.
+      security:
+      - jwt: []
+      tags:
+      - CallHome
+  /api/call_home/{ibm_id}/{company_name}/{first_name}/{last_name}/{email}:
+    get:
+      parameters:
+      - in: path
+        name: ibm_id
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: company_name
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: first_name
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: last_name
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: email
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/vnd.ceph.api.v1.0+json:
+              type: object
+          description: OK
+        '400':
+          description: Operation exception. Please check the response body for details.
+        '401':
+          description: Unauthenticated access. Please login first.
+        '403':
+          description: Unauthorized access. Please check your permissions.
+        '500':
+          description: Unexpected error. Please check the response body for the stack
+            trace.
+      security:
+      - jwt: []
+      tags:
+      - CallHome
+  /api/call_home/{tenant_id}/{ibm_id}/{company_name}/{first_name}/{last_name}/{email}:
+    put:
+      parameters:
+      - in: path
+        name: tenant_id
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: ibm_id
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: company_name
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: first_name
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: last_name
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: email
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/vnd.ceph.api.v1.0+json:
+              type: object
+          description: Resource updated.
+        '202':
+          content:
+            application/vnd.ceph.api.v1.0+json:
+              type: object
+          description: Operation is still executing. Please check the task queue.
+        '400':
+          description: Operation exception. Please check the response body for details.
+        '401':
+          description: Unauthenticated access. Please login first.
+        '403':
+          description: Unauthorized access. Please check your permissions.
+        '500':
+          description: Unexpected error. Please check the response body for the stack
+            trace.
+      security:
+      - jwt: []
+      tags:
+      - CallHome
   /api/cephfs:
     get:
       parameters: []
@@ -3167,7 +3889,7 @@ paths:
       summary: Create bootstrap peer
       tags:
       - CephfsMirror
-  /api/cephfs/mirror/daemon-status:
+  /api/cephfs/mirror/daemon/status:
     get:
       parameters: []
       responses:
@@ -3204,7 +3926,7 @@ paths:
                                       description: Ceph client name
                                       type: string
                                     cluster_name:
-                                      description: Remote cluster name
+                                      description: Remote site name
                                       type: string
                                     fs_name:
                                       description: Remote filesystem name
@@ -3279,7 +4001,7 @@ paths:
                                       description: Ceph client name
                                       type: string
                                     cluster_name:
-                                      description: Remote cluster name
+                                      description: Remote site name
                                       type: string
                                     fs_name:
                                       description: Remote filesystem name
@@ -3322,6 +4044,213 @@ paths:
       security:
       - jwt: []
       summary: Get mirror daemon and peers information
+      tags:
+      - CephfsMirror
+  /api/cephfs/mirror/directory:
+    delete:
+      parameters:
+      - description: File system name
+        in: query
+        name: fs_name
+        required: true
+        schema:
+          type: string
+      - description: Directory path to remove from mirroring
+        in: query
+        name: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '202':
+          content:
+            application/json:
+              schema:
+                type: object
+            application/vnd.ceph.api.v1.0+json:
+              schema:
+                type: object
+          description: Operation is still executing. Please check the task queue.
+        '204':
+          content:
+            application/json:
+              schema:
+                type: object
+            application/vnd.ceph.api.v1.0+json:
+              schema:
+                type: object
+          description: Resource deleted.
+        '400':
+          description: Operation exception. Please check the response body for details.
+        '401':
+          description: Unauthenticated access. Please login first.
+        '403':
+          description: Unauthorized access. Please check your permissions.
+        '500':
+          description: Unexpected error. Please check the response body for the stack
+            trace.
+      security:
+      - jwt: []
+      summary: Remove a directory path from snapshot mirroring
+      tags:
+      - CephfsMirror
+    post:
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                fs_name:
+                  description: File system name
+                  type: string
+                path:
+                  description: Directory path to mirror
+                  type: string
+              required:
+              - fs_name
+              - path
+              type: object
+      responses:
+        '201':
+          content:
+            application/vnd.ceph.api.v1.0+json:
+              type: object
+          description: Resource created.
+        '202':
+          content:
+            application/vnd.ceph.api.v1.0+json:
+              type: object
+          description: Operation is still executing. Please check the task queue.
+        '400':
+          description: Operation exception. Please check the response body for details.
+        '401':
+          description: Unauthenticated access. Please login first.
+        '403':
+          description: Unauthorized access. Please check your permissions.
+        '500':
+          description: Unexpected error. Please check the response body for the stack
+            trace.
+      security:
+      - jwt: []
+      summary: Add a directory path for snapshot mirroring
+      tags:
+      - CephfsMirror
+  /api/cephfs/mirror/directory/{fs_name}:
+    get:
+      parameters:
+      - description: File system name
+        in: path
+        name: fs_name
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/vnd.ceph.api.v1.0+json:
+              type: object
+          description: OK
+        '400':
+          description: Operation exception. Please check the response body for details.
+        '401':
+          description: Unauthenticated access. Please login first.
+        '403':
+          description: Unauthorized access. Please check your permissions.
+        '500':
+          description: Unexpected error. Please check the response body for the stack
+            trace.
+      security:
+      - jwt: []
+      summary: List snapshot mirrored directories
+      tags:
+      - CephfsMirror
+  /api/cephfs/mirror/disable:
+    post:
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                fs_name:
+                  description: File system name
+                  type: string
+              required:
+              - fs_name
+              type: object
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                type: object
+            application/vnd.ceph.api.v1.0+json:
+              schema:
+                type: object
+          description: Resource created.
+        '202':
+          content:
+            application/json:
+              schema:
+                type: object
+            application/vnd.ceph.api.v1.0+json:
+              schema:
+                type: object
+          description: Operation is still executing. Please check the task queue.
+        '400':
+          description: Operation exception. Please check the response body for details.
+        '401':
+          description: Unauthenticated access. Please login first.
+        '403':
+          description: Unauthorized access. Please check your permissions.
+        '500':
+          description: Unexpected error. Please check the response body for the stack
+            trace.
+      security:
+      - jwt: []
+      summary: Disable mirroring for a filesystem
+      tags:
+      - CephfsMirror
+  /api/cephfs/mirror/enable:
+    post:
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                fs_name:
+                  description: File system name
+                  type: string
+              required:
+              - fs_name
+              type: object
+      responses:
+        '201':
+          content:
+            application/vnd.ceph.api.v1.0+json:
+              schema:
+                properties: {}
+                type: object
+          description: Resource created.
+        '202':
+          content:
+            application/vnd.ceph.api.v1.0+json:
+              type: object
+          description: Operation is still executing. Please check the task queue.
+        '400':
+          description: Operation exception. Please check the response body for details.
+        '401':
+          description: Unauthenticated access. Please login first.
+        '403':
+          description: Unauthorized access. Please check your permissions.
+        '500':
+          description: Unexpected error. Please check the response body for the stack
+            trace.
+      security:
+      - jwt: []
+      summary: Enable mirroring for a filesystem
       tags:
       - CephfsMirror
   /api/cephfs/mirror/token:
@@ -3450,6 +4379,610 @@ paths:
       security:
       - jwt: []
       summary: Get peers
+      tags:
+      - CephfsMirror
+  /api/cephfs/mirror/{fs_name}/checkpoint:
+    delete:
+      parameters:
+      - description: File system name
+        in: path
+        name: fs_name
+        required: true
+        schema:
+          type: string
+      - description: Mirrored directory path
+        in: query
+        name: path
+        required: true
+        schema:
+          type: string
+      - description: Snapshot name
+        in: query
+        name: snap_name
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+            application/vnd.ceph.api.v1.0+json:
+              schema:
+                type: object
+          description: OK
+        '400':
+          description: Operation exception. Please check the response body for details.
+        '401':
+          description: Unauthenticated access. Please login first.
+        '403':
+          description: Unauthorized access. Please check your permissions.
+        '500':
+          description: Unexpected error. Please check the response body for the stack
+            trace.
+      security:
+      - jwt: []
+      summary: Remove a checkpoint from a snapshot
+      tags:
+      - CephfsMirror
+    get:
+      parameters:
+      - description: File system name
+        in: path
+        name: fs_name
+        required: true
+        schema:
+          type: string
+      - description: Mirrored directory path
+        in: query
+        name: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                properties:
+                  checkpoints:
+                    description: Checkpoints for the directory
+                    items:
+                      properties:
+                        created_at:
+                          description: Checkpoint creation time
+                          type: string
+                        error_msg:
+                          description: Checkpoint error message
+                          type: string
+                        snap_id:
+                          description: Snapshot ID
+                          type: integer
+                        snap_name:
+                          description: Snapshot name
+                          type: string
+                        status:
+                          description: Checkpoint status
+                          type: string
+                        updated_at:
+                          description: Checkpoint last update time
+                          type: string
+                      required:
+                      - snap_id
+                      - snap_name
+                      - status
+                      - created_at
+                      - updated_at
+                      type: object
+                    type: array
+                  dir_root:
+                    description: Mirrored directory path
+                    type: string
+                required:
+                - dir_root
+                - checkpoints
+                type: object
+            application/vnd.ceph.api.v1.0+json:
+              schema:
+                type: object
+          description: OK
+        '400':
+          description: Operation exception. Please check the response body for details.
+        '401':
+          description: Unauthenticated access. Please login first.
+        '403':
+          description: Unauthorized access. Please check your permissions.
+        '500':
+          description: Unexpected error. Please check the response body for the stack
+            trace.
+      security:
+      - jwt: []
+      summary: List checkpoints for a mirrored directory
+      tags:
+      - CephfsMirror
+    post:
+      parameters:
+      - description: File system name
+        in: path
+        name: fs_name
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                path:
+                  description: Mirrored directory path
+                  type: string
+                snap_name:
+                  description: Snapshot name
+                  type: string
+              required:
+              - path
+              - snap_name
+              type: object
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+            application/vnd.ceph.api.v1.0+json:
+              schema:
+                type: object
+          description: OK
+        '400':
+          description: Operation exception. Please check the response body for details.
+        '401':
+          description: Unauthenticated access. Please login first.
+        '403':
+          description: Unauthorized access. Please check your permissions.
+        '500':
+          description: Unexpected error. Please check the response body for the stack
+            trace.
+      security:
+      - jwt: []
+      summary: Add a checkpoint for a snapshot
+      tags:
+      - CephfsMirror
+  /api/cephfs/mirror/{fs_name}/checkpoint/now:
+    post:
+      parameters:
+      - description: File system name
+        in: path
+        name: fs_name
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                path:
+                  description: Mirrored directory path
+                  type: string
+              required:
+              - path
+              type: object
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+            application/vnd.ceph.api.v1.0+json:
+              schema:
+                type: object
+          description: OK
+        '400':
+          description: Operation exception. Please check the response body for details.
+        '401':
+          description: Unauthenticated access. Please login first.
+        '403':
+          description: Unauthorized access. Please check your permissions.
+        '500':
+          description: Unexpected error. Please check the response body for the stack
+            trace.
+      security:
+      - jwt: []
+      summary: Create a checkpoint on the latest snapshot
+      tags:
+      - CephfsMirror
+  /api/cephfs/mirror/{fs_name}/status:
+    get:
+      parameters:
+      - description: File system name
+        in: path
+        name: fs_name
+        required: true
+        schema:
+          type: string
+      - default: ''
+        description: Mirrored directory path
+        in: query
+        name: path
+        schema:
+          type: string
+      - default: ''
+        description: Peer UUID
+        in: query
+        name: peer_id
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/vnd.ceph.api.v1.0+json:
+              schema:
+                properties:
+                  metrics:
+                    description: Snapshot mirror sync metrics grouped by mirrored
+                      directory path
+                    properties:
+                      /dir_path:
+                        description: Mirror directory metrics keyed by absolute path
+                        properties:
+                          peer:
+                            description: Peer sync statistics for the mirrored directory
+                            properties:
+                              peer_uuid:
+                                description: Sync statistics keyed by peer UUID
+                                properties:
+                                  current_syncing_snap:
+                                    description: Snapshot currently being synchronized
+                                    properties:
+                                      avg_read_throughput_bytes:
+                                        description: Average read throughput
+                                        type: string
+                                      avg_write_throughput_bytes:
+                                        description: Average write throughput
+                                        type: string
+                                      bytes:
+                                        description: Byte sync progress
+                                        properties:
+                                          sync_bytes:
+                                            description: Bytes synced so far
+                                            type: string
+                                          sync_percent:
+                                            description: Sync completion percentage
+                                            type: string
+                                          total_bytes:
+                                            description: Total bytes to sync
+                                            type: string
+                                        required:
+                                        - sync_bytes
+                                        - total_bytes
+                                        - sync_percent
+                                        type: object
+                                      crawl:
+                                        description: Directory crawl progress
+                                        properties:
+                                          duration:
+                                            description: Phase duration
+                                            type: string
+                                          state:
+                                            description: Phase state, e.g. completed,
+                                              in-progress, or waiting
+                                            type: string
+                                        required:
+                                        - state
+                                        - duration
+                                        type: object
+                                      datasync_queue_wait:
+                                        description: Data sync queue wait progress
+                                        properties:
+                                          duration:
+                                            description: Phase duration
+                                            type: string
+                                          state:
+                                            description: Phase state, e.g. completed,
+                                              in-progress, or waiting
+                                            type: string
+                                        required:
+                                        - state
+                                        - duration
+                                        type: object
+                                      eta:
+                                        description: Estimated time remaining for
+                                          the current sync
+                                        type: string
+                                      files:
+                                        description: File sync progress
+                                        properties:
+                                          sync_files:
+                                            description: Files synced so far
+                                            type: string
+                                          sync_percent:
+                                            description: Sync completion percentage
+                                            type: string
+                                          total_files:
+                                            description: Total files to sync
+                                            type: string
+                                        required:
+                                        - sync_files
+                                        - total_files
+                                        - sync_percent
+                                        type: object
+                                      id:
+                                        description: Snapshot ID
+                                        type: integer
+                                      name:
+                                        description: Snapshot name
+                                        type: string
+                                      sync-mode:
+                                        description: 'Snapshot sync mode: full or
+                                          delta'
+                                        type: string
+                                    required:
+                                    - id
+                                    - name
+                                    - sync-mode
+                                    - avg_read_throughput_bytes
+                                    - avg_write_throughput_bytes
+                                    - crawl
+                                    - datasync_queue_wait
+                                    - bytes
+                                    - files
+                                    - eta
+                                    type: object
+                                  failure_reason:
+                                    description: Last sync failure reason when state
+                                      is failed
+                                    type: string
+                                  last_synced_snap:
+                                    description: Last successfully synchronized snapshot
+                                    properties:
+                                      crawl_duration:
+                                        description: Time taken to scan directory
+                                        type: string
+                                      datasync_queue_wait_duration:
+                                        description: Time in data sync queue
+                                        type: string
+                                      id:
+                                        description: Snapshot ID
+                                        type: integer
+                                      name:
+                                        description: Snapshot name
+                                        type: string
+                                      sync_bytes:
+                                        description: Bytes synced for the snapshot
+                                        type: string
+                                      sync_duration:
+                                        description: Snapshot sync duration
+                                        type: string
+                                      sync_files:
+                                        description: Number of files synced for the
+                                          snapshot
+                                        type: integer
+                                      sync_time_stamp:
+                                        description: Wall-clock time when the snapshot
+                                          sync finished
+                                        type: string
+                                    required:
+                                    - id
+                                    - name
+                                    - crawl_duration
+                                    - datasync_queue_wait_duration
+                                    - sync_duration
+                                    - sync_time_stamp
+                                    - sync_bytes
+                                    - sync_files
+                                    type: object
+                                  metrics_updated_at:
+                                    description: Wall-clock time when metrics were
+                                      last updated
+                                    type: number
+                                  snaps_deleted:
+                                    description: Total number of snapshots deleted
+                                      on the peer
+                                    type: integer
+                                  snaps_renamed:
+                                    description: Total number of snapshots renamed
+                                      on the peer
+                                    type: integer
+                                  snaps_synced:
+                                    description: Total number of snapshots synchronized
+                                    type: integer
+                                  state:
+                                    description: 'Mirror sync state: idle, syncing,
+                                      stale, or failed'
+                                    type: string
+                                required:
+                                - state
+                                - failure_reason
+                                - current_syncing_snap
+                                - last_synced_snap
+                                - snaps_synced
+                                - snaps_deleted
+                                - snaps_renamed
+                                - metrics_updated_at
+                                type: object
+                            required:
+                            - peer_uuid
+                            type: object
+                        required:
+                        - peer
+                        type: object
+                    required:
+                    - /dir_path
+                    type: object
+                required:
+                - metrics
+                type: object
+            application/vnd.ceph.api.v1.0+json:
+              schema:
+                properties:
+                  metrics:
+                    description: Snapshot mirror sync metrics grouped by mirrored
+                      directory path
+                    properties:
+                      /dir_path:
+                        description: Mirror directory metrics keyed by absolute path
+                        properties:
+                          peer:
+                            description: Peer sync statistics for the mirrored directory
+                            properties:
+                              peer_uuid:
+                                description: Sync statistics keyed by peer UUID
+                                properties:
+                                  current_syncing_snap:
+                                    description: Snapshot currently being synchronized
+                                    properties:
+                                      avg_read_throughput_bytes:
+                                        description: Average read throughput
+                                        type: string
+                                      avg_write_throughput_bytes:
+                                        description: Average write throughput
+                                        type: string
+                                      bytes:
+                                        description: Byte sync progress
+                                        properties:
+                                          sync_bytes:
+                                            description: Bytes synced so far
+                                            type: string
+                                          sync_percent:
+                                            description: Sync completion percentage
+                                            type: string
+                                          total_bytes:
+                                            description: Total bytes to sync
+                                            type: string
+                                        required: *id026
+                                        type: object
+                                      crawl:
+                                        description: Directory crawl progress
+                                        properties:
+                                          duration:
+                                            description: Phase duration
+                                            type: string
+                                          state:
+                                            description: Phase state, e.g. completed,
+                                              in-progress, or waiting
+                                            type: string
+                                        required: *id027
+                                        type: object
+                                      datasync_queue_wait:
+                                        description: Data sync queue wait progress
+                                        properties:
+                                          duration:
+                                            description: Phase duration
+                                            type: string
+                                          state:
+                                            description: Phase state, e.g. completed,
+                                              in-progress, or waiting
+                                            type: string
+                                        required: *id028
+                                        type: object
+                                      eta:
+                                        description: Estimated time remaining for
+                                          the current sync
+                                        type: string
+                                      files:
+                                        description: File sync progress
+                                        properties:
+                                          sync_files:
+                                            description: Files synced so far
+                                            type: string
+                                          sync_percent:
+                                            description: Sync completion percentage
+                                            type: string
+                                          total_files:
+                                            description: Total files to sync
+                                            type: string
+                                        required: *id029
+                                        type: object
+                                      id:
+                                        description: Snapshot ID
+                                        type: integer
+                                      name:
+                                        description: Snapshot name
+                                        type: string
+                                      sync-mode:
+                                        description: 'Snapshot sync mode: full or
+                                          delta'
+                                        type: string
+                                    required: *id030
+                                    type: object
+                                  failure_reason:
+                                    description: Last sync failure reason when state
+                                      is failed
+                                    type: string
+                                  last_synced_snap:
+                                    description: Last successfully synchronized snapshot
+                                    properties:
+                                      crawl_duration:
+                                        description: Time taken to scan directory
+                                        type: string
+                                      datasync_queue_wait_duration:
+                                        description: Time in data sync queue
+                                        type: string
+                                      id:
+                                        description: Snapshot ID
+                                        type: integer
+                                      name:
+                                        description: Snapshot name
+                                        type: string
+                                      sync_bytes:
+                                        description: Bytes synced for the snapshot
+                                        type: string
+                                      sync_duration:
+                                        description: Snapshot sync duration
+                                        type: string
+                                      sync_files:
+                                        description: Number of files synced for the
+                                          snapshot
+                                        type: integer
+                                      sync_time_stamp:
+                                        description: Wall-clock time when the snapshot
+                                          sync finished
+                                        type: string
+                                    required: *id031
+                                    type: object
+                                  metrics_updated_at:
+                                    description: Wall-clock time when metrics were
+                                      last updated
+                                    type: number
+                                  snaps_deleted:
+                                    description: Total number of snapshots deleted
+                                      on the peer
+                                    type: integer
+                                  snaps_renamed:
+                                    description: Total number of snapshots renamed
+                                      on the peer
+                                    type: integer
+                                  snaps_synced:
+                                    description: Total number of snapshots synchronized
+                                    type: integer
+                                  state:
+                                    description: 'Mirror sync state: idle, syncing,
+                                      stale, or failed'
+                                    type: string
+                                required: *id032
+                                type: object
+                            required: *id033
+                            type: object
+                        required: *id034
+                        type: object
+                    required: *id035
+                    type: object
+                required: *id036
+                type: object
+          description: OK
+        '400':
+          description: Operation exception. Please check the response body for details.
+        '401':
+          description: Unauthenticated access. Please login first.
+        '403':
+          description: Unauthorized access. Please check your permissions.
+        '500':
+          description: Unexpected error. Please check the response body for the stack
+            trace.
+      security:
+      - jwt: []
+      summary: Get snapshot mirror sync metrics
       tags:
       - CephfsMirror
   /api/cephfs/mirror/{fs_name}/{peer_uuid}:
@@ -5653,6 +7186,68 @@ paths:
       summary: Update the cluster status
       tags:
       - Cluster
+  /api/cluster/license/{image_name}:
+    get:
+      parameters:
+      - description: Image Name
+        in: path
+        name: image_name
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/vnd.ceph.api.v1.0+json:
+              type: object
+          description: OK
+        '400':
+          description: Operation exception. Please check the response body for details.
+        '401':
+          description: Unauthenticated access. Please login first.
+        '403':
+          description: Unauthorized access. Please check your permissions.
+        '500':
+          description: Unexpected error. Please check the response body for the stack
+            trace.
+      security:
+      - jwt: []
+      summary: Get the cluster license information
+      tags:
+      - License
+    put:
+      parameters:
+      - description: Image Name
+        in: path
+        name: image_name
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/vnd.ceph.api.v1.0+json:
+              type: object
+          description: Resource updated.
+        '202':
+          content:
+            application/vnd.ceph.api.v1.0+json:
+              type: object
+          description: Operation is still executing. Please check the task queue.
+        '400':
+          description: Operation exception. Please check the response body for details.
+        '401':
+          description: Unauthenticated access. Please login first.
+        '403':
+          description: Unauthorized access. Please check your permissions.
+        '500':
+          description: Unexpected error. Please check the response body for the stack
+            trace.
+      security:
+      - jwt: []
+      summary: Accept the cluster license
+      tags:
+      - License
   /api/cluster/upgrade:
     get:
       parameters:
@@ -5784,6 +7379,9 @@ paths:
                   type: string
                 image:
                   type: string
+                license_accepted:
+                  default: false
+                  type: boolean
                 limit:
                   type: string
                 services:
@@ -7043,6 +8641,9 @@ paths:
               schema:
                 properties:
                   cephfs:
+                    description: ''
+                    type: boolean
+                  dashboard:
                     description: ''
                     type: boolean
                   iscsi:
@@ -11685,6 +13286,142 @@ paths:
       - jwt: []
       tags:
       - NFS-Ganesha
+  /api/nfs-ganesha/cluster/qos/bw:
+    patch:
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                cluster_id:
+                  type: string
+                disable_qos:
+                  default: false
+                  type: boolean
+                max_client_combined_bw:
+                  type: string
+                max_client_read_bw:
+                  type: string
+                max_client_write_bw:
+                  type: string
+                max_export_combined_bw:
+                  type: string
+                max_export_read_bw:
+                  type: string
+                max_export_write_bw:
+                  type: string
+                qos_type:
+                  default: ''
+                  type: string
+              required:
+              - cluster_id
+              type: object
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+            application/vnd.ceph.api.v1.0+json:
+              schema:
+                type: object
+          description: Resource updated.
+        '400':
+          description: Operation exception. Please check the response body for details.
+        '401':
+          description: Unauthenticated access. Please login first.
+        '403':
+          description: Unauthorized access. Please check your permissions.
+        '500':
+          description: Unexpected error. Please check the response body for the stack
+            trace.
+      security:
+      - jwt: []
+      summary: Enable/disable QoS configuration for bandwidth
+      tags:
+      - NFS-Ganesha
+  /api/nfs-ganesha/cluster/qos/ops:
+    patch:
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                cluster_id:
+                  type: string
+                disable_ops:
+                  default: false
+                  type: boolean
+                max_client_iops:
+                  default: 0
+                  type: integer
+                max_export_iops:
+                  default: 0
+                  type: integer
+                qos_type:
+                  type: string
+              required:
+              - cluster_id
+              - qos_type
+              type: object
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+            application/vnd.ceph.api.v1.0+json:
+              schema:
+                type: object
+          description: Resource updated.
+        '400':
+          description: Operation exception. Please check the response body for details.
+        '401':
+          description: Unauthenticated access. Please login first.
+        '403':
+          description: Unauthorized access. Please check your permissions.
+        '500':
+          description: Unexpected error. Please check the response body for the stack
+            trace.
+      security:
+      - jwt: []
+      summary: Enable/disable QoS configuration for NFS IOPs
+      tags:
+      - NFS-Ganesha
+  /api/nfs-ganesha/cluster/qos/{cluster_id}:
+    get:
+      parameters:
+      - in: path
+        name: cluster_id
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+            application/vnd.ceph.api.v1.0+json:
+              schema:
+                type: object
+          description: OK
+        '400':
+          description: Operation exception. Please check the response body for details.
+        '401':
+          description: Unauthenticated access. Please login first.
+        '403':
+          description: Unauthorized access. Please check your permissions.
+        '500':
+          description: Unexpected error. Please check the response body for the stack
+            trace.
+      security:
+      - jwt: []
+      summary: Get the cluster QoS configuration for bandwidth and iops
+      tags:
+      - NFS-Ganesha
   /api/nfs-ganesha/export:
     get:
       parameters:
@@ -12137,6 +13874,147 @@ paths:
       security:
       - jwt: []
       summary: Creates a new NFS-Ganesha export
+      tags:
+      - NFS-Ganesha
+  /api/nfs-ganesha/export/qos:
+    patch:
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                cluster_id:
+                  type: string
+                disable_qos:
+                  default: false
+                  type: boolean
+                max_client_combined_bw:
+                  type: string
+                max_client_read_bw:
+                  type: string
+                max_client_write_bw:
+                  type: string
+                max_export_combined_bw:
+                  type: string
+                max_export_read_bw:
+                  type: string
+                max_export_write_bw:
+                  type: string
+                pseudo_path:
+                  type: string
+              required:
+              - cluster_id
+              - pseudo_path
+              type: object
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+            application/vnd.ceph.api.v1.0+json:
+              schema:
+                type: object
+          description: Resource updated.
+        '400':
+          description: Operation exception. Please check the response body for details.
+        '401':
+          description: Unauthenticated access. Please login first.
+        '403':
+          description: Unauthorized access. Please check your permissions.
+        '500':
+          description: Unexpected error. Please check the response body for the stack
+            trace.
+      security:
+      - jwt: []
+      summary: Enable/disable export QoS configuration for bandwidth
+      tags:
+      - NFS-Ganesha
+  /api/nfs-ganesha/export/qos/ops:
+    patch:
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                cluster_id:
+                  type: string
+                disable_qos_ops:
+                  default: false
+                  type: boolean
+                max_client_iops:
+                  default: 0
+                  type: integer
+                max_export_iops:
+                  default: 0
+                  type: integer
+                pseudo_path:
+                  type: string
+              required:
+              - cluster_id
+              - pseudo_path
+              type: object
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+            application/vnd.ceph.api.v1.0+json:
+              schema:
+                type: object
+          description: Resource updated.
+        '400':
+          description: Operation exception. Please check the response body for details.
+        '401':
+          description: Unauthenticated access. Please login first.
+        '403':
+          description: Unauthorized access. Please check your permissions.
+        '500':
+          description: Unexpected error. Please check the response body for the stack
+            trace.
+      security:
+      - jwt: []
+      summary: Enable/disable export QoS configuration for operations
+      tags:
+      - NFS-Ganesha
+  /api/nfs-ganesha/export/qos/{cluster_id}/{pseudo_path}:
+    get:
+      parameters:
+      - in: path
+        name: cluster_id
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: pseudo_path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+            application/vnd.ceph.api.v1.0+json:
+              schema:
+                type: object
+          description: OK
+        '400':
+          description: Operation exception. Please check the response body for details.
+        '401':
+          description: Unauthenticated access. Please login first.
+        '403':
+          description: Unauthorized access. Please check your permissions.
+        '500':
+          description: Unexpected error. Please check the response body for the stack
+            trace.
+      security:
+      - jwt: []
+      summary: Get the export QoS configuration for bandwidth and IOPS
       tags:
       - NFS-Ganesha
   /api/nfs-ganesha/export/{cluster_id}/{export_id}:
@@ -12941,6 +14819,7 @@ paths:
                   description: NVMeoF gateway group
                   type: string
                 nqn:
+                  default: ''
                   description: NVMeoF subsystem NQN
                   type: string
                 server_address:
@@ -12949,27 +14828,17 @@ paths:
                 traddr:
                   description: NVMeoF gateway address (deprecated)
                   type: string
-              required:
-              - nqn
               type: object
       responses:
         '200':
           content:
-            application/json:
-              schema:
-                type: object
             application/vnd.ceph.api.v1.0+json:
-              schema:
-                type: object
+              type: object
           description: Resource updated.
         '202':
           content:
-            application/json:
-              schema:
-                type: object
             application/vnd.ceph.api.v1.0+json:
-              schema:
-                type: object
+              type: object
           description: Operation is still executing. Please check the task queue.
         '400':
           description: Operation exception. Please check the response body for details.
@@ -13055,12 +14924,8 @@ paths:
       responses:
         '200':
           content:
-            application/json:
-              schema:
-                type: object
             application/vnd.ceph.api.v1.0+json:
-              schema:
-                type: object
+              type: object
           description: OK
         '400':
           description: Operation exception. Please check the response body for details.
@@ -13362,6 +15227,9 @@ paths:
                 max_namespaces:
                   description: Maximum number of namespaces
                   type: integer
+                model_name:
+                  description: Subsystem model name
+                  type: string
                 network_mask:
                   description: Network mask to automatically create listeners
                   items:
@@ -13540,6 +15408,68 @@ paths:
       security:
       - jwt: []
       summary: Get information from a specific NVMeoF subsystem
+      tags:
+      - NVMe-oF Subsystem
+  /api/nvmeof/subsystem/{nqn}/change_key:
+    put:
+      parameters:
+      - description: NVMeoF subsystem NQN
+        in: path
+        name: nqn
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                dhchap_key:
+                  description: Subsystem DH-HMAC-CHAP key
+                  type: string
+                gw_group:
+                  description: NVMeoF gateway group
+                  type: string
+                server_address:
+                  description: NVMeoF gateway address
+                  type: string
+                traddr:
+                  description: NVMeoF gateway address (deprecated)
+                  type: string
+              required:
+              - dhchap_key
+              type: object
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+            application/vnd.ceph.api.v1.0+json:
+              schema:
+                type: object
+          description: Resource updated.
+        '202':
+          content:
+            application/json:
+              schema:
+                type: object
+            application/vnd.ceph.api.v1.0+json:
+              schema:
+                type: object
+          description: Operation is still executing. Please check the task queue.
+        '400':
+          description: Operation exception. Please check the response body for details.
+        '401':
+          description: Unauthenticated access. Please login first.
+        '403':
+          description: Unauthorized access. Please check your permissions.
+        '500':
+          description: Unexpected error. Please check the response body for the stack
+            trace.
+      security:
+      - jwt: []
+      summary: Change subsystem inband authentication key
       tags:
       - NVMe-oF Subsystem
   /api/nvmeof/subsystem/{nqn}/connection:
@@ -13750,6 +15680,12 @@ paths:
         name: traddr
         schema:
           type: string
+      - default: false
+        description: Do not disconnect existing connections from that host
+        in: query
+        name: keep_connections
+        schema:
+          type: boolean
       responses:
         '202':
           content:
@@ -14501,12 +16437,8 @@ paths:
       responses:
         '200':
           content:
-            application/json:
-              schema:
-                type: object
             application/vnd.ceph.api.v1.0+json:
-              schema:
-                type: object
+              type: object
           description: OK
         '400':
           description: Operation exception. Please check the response body for details.
@@ -14564,12 +16496,8 @@ paths:
       responses:
         '200':
           content:
-            application/json:
-              schema:
-                type: object
             application/vnd.ceph.api.v1.0+json:
-              schema:
-                type: object
+              type: object
           description: OK
         '400':
           description: Operation exception. Please check the response body for details.
@@ -14966,21 +16894,13 @@ paths:
       responses:
         '200':
           content:
-            application/json:
-              schema:
-                type: object
             application/vnd.ceph.api.v1.0+json:
-              schema:
-                type: object
+              type: object
           description: Resource updated.
         '202':
           content:
-            application/json:
-              schema:
-                type: object
             application/vnd.ceph.api.v1.0+json:
-              schema:
-                type: object
+              type: object
           description: Operation is still executing. Please check the task queue.
         '400':
           description: Operation exception. Please check the response body for details.
@@ -15540,6 +17460,69 @@ paths:
       - jwt: []
       summary: changes the trash image on delete of the specified NVMeoF                 namespace
         to all or selected hosts
+      tags:
+      - NVMe-oF Subsystem Namespace
+  /api/nvmeof/subsystem/{nqn}/namespace/{nsid}/unpin:
+    put:
+      parameters:
+      - description: NVMeoF subsystem NQN
+        in: path
+        name: nqn
+        required: true
+        schema:
+          type: string
+      - description: NVMeoF Namespace ID
+        in: path
+        name: nsid
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              properties:
+                gw_group:
+                  description: NVMeoF gateway group
+                  type: string
+                server_address:
+                  description: NVMeoF gateway address
+                  type: string
+                traddr:
+                  description: NVMeoF gateway address (deprecated)
+                  type: string
+              type: object
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+            application/vnd.ceph.api.v1.0+json:
+              schema:
+                type: object
+          description: Resource updated.
+        '202':
+          content:
+            application/json:
+              schema:
+                type: object
+            application/vnd.ceph.api.v1.0+json:
+              schema:
+                type: object
+          description: Operation is still executing. Please check the task queue.
+        '400':
+          description: Operation exception. Please check the response body for details.
+        '401':
+          description: Unauthenticated access. Please login first.
+        '403':
+          description: Unauthorized access. Please check your permissions.
+        '500':
+          description: Unexpected error. Please check the response body for the stack
+            trace.
+      security:
+      - jwt: []
+      summary: Unpin namespace load balancing group
       tags:
       - NVMe-oF Subsystem Namespace
   /api/osd:
@@ -17736,21 +19719,13 @@ paths:
       responses:
         '200':
           content:
-            application/json:
-              schema:
-                type: object
             application/vnd.ceph.api.v1.0+json:
-              schema:
-                type: object
+              type: object
           description: Resource updated.
         '202':
           content:
-            application/json:
-              schema:
-                type: object
             application/vnd.ceph.api.v1.0+json:
-              schema:
-                type: object
+              type: object
           description: Operation is still executing. Please check the task queue.
         '400':
           description: Operation exception. Please check the response body for details.
@@ -17810,21 +19785,13 @@ paths:
       responses:
         '200':
           content:
-            application/json:
-              schema:
-                type: object
             application/vnd.ceph.api.v1.0+json:
-              schema:
-                type: object
+              type: object
           description: Resource updated.
         '202':
           content:
-            application/json:
-              schema:
-                type: object
             application/vnd.ceph.api.v1.0+json:
-              schema:
-                type: object
+              type: object
           description: Operation is still executing. Please check the task queue.
         '400':
           description: Operation exception. Please check the response body for details.
@@ -18401,12 +20368,8 @@ paths:
       responses:
         '200':
           content:
-            application/json:
-              schema:
-                type: object
             application/vnd.ceph.api.v1.0+json:
-              schema:
-                type: object
+              type: object
           description: OK
         '400':
           description: Operation exception. Please check the response body for details.
@@ -18447,21 +20410,13 @@ paths:
       responses:
         '201':
           content:
-            application/json:
-              schema:
-                type: object
             application/vnd.ceph.api.v1.0+json:
-              schema:
-                type: object
+              type: object
           description: Resource created.
         '202':
           content:
-            application/json:
-              schema:
-                type: object
             application/vnd.ceph.api.v1.0+json:
-              schema:
-                type: object
+              type: object
           description: Operation is still executing. Please check the task queue.
         '400':
           description: Operation exception. Please check the response body for details.
@@ -18500,21 +20455,13 @@ paths:
       responses:
         '200':
           content:
-            application/json:
-              schema:
-                type: object
             application/vnd.ceph.api.v1.0+json:
-              schema:
-                type: object
+              type: object
           description: Resource updated.
         '202':
           content:
-            application/json:
-              schema:
-                type: object
             application/vnd.ceph.api.v1.0+json:
-              schema:
-                type: object
+              type: object
           description: Operation is still executing. Please check the task queue.
         '400':
           description: Operation exception. Please check the response body for details.
@@ -18546,21 +20493,13 @@ paths:
       responses:
         '202':
           content:
-            application/json:
-              schema:
-                type: object
             application/vnd.ceph.api.v1.0+json:
-              schema:
-                type: object
+              type: object
           description: Operation is still executing. Please check the task queue.
         '204':
           content:
-            application/json:
-              schema:
-                type: object
             application/vnd.ceph.api.v1.0+json:
-              schema:
-                type: object
+              type: object
           description: Resource deleted.
         '400':
           description: Operation exception. Please check the response body for details.
@@ -18591,12 +20530,8 @@ paths:
       responses:
         '200':
           content:
-            application/json:
-              schema:
-                type: object
             application/vnd.ceph.api.v1.0+json:
-              schema:
-                type: object
+              type: object
           description: OK
         '400':
           description: Operation exception. Please check the response body for details.
@@ -24778,7 +26713,7 @@ paths:
                   write_iops_limit:
                     description: 'QoS: max write IOPS (0=disabled)'
                     type: integer
-                required: &id158
+                required:
                 - resource_type
                 - cluster_id
                 - share_id
@@ -24793,71 +26728,6 @@ paths:
                 - write_bw_limit
                 - read_delay_max
                 - write_delay_max
-                type: object
-            application/vnd.ceph.api.v1.0+json:
-              schema:
-                properties:
-                  browseable:
-                    description: Indicates if the share is browseable
-                    type: boolean
-                  cephfs:
-                    description: Configuration for the CephFS share
-                    properties:
-                      path:
-                        description: Path within the CephFS file system
-                        type: string
-                      provider:
-                        description: Provider of the CephFS share, e.g., 'samba-vfs'
-                        type: string
-                      subvolume:
-                        description: Subvolume within the CephFS file system
-                        type: string
-                      subvolumegroup:
-                        description: Subvolume Group in CephFS file system
-                        type: string
-                      volume:
-                        description: Name of the CephFS file system
-                        type: string
-                    required: *id157
-                    type: object
-                  cluster_id:
-                    description: Unique identifier for the cluster
-                    type: string
-                  intent:
-                    description: Desired state of the resource, e.g., 'present' or
-                      'removed'
-                    type: string
-                  name:
-                    description: Name of the share
-                    type: string
-                  read_bw_limit:
-                    description: 'QoS: max read bandwidth B/s (0=disabled)'
-                    type: integer
-                  read_delay_max:
-                    description: 'QoS: max read delay in seconds (0-300)'
-                    type: integer
-                  read_iops_limit:
-                    description: 'QoS: max read IOPS (0=disabled)'
-                    type: integer
-                  readonly:
-                    description: Indicates if the share is read-only
-                    type: boolean
-                  resource_type:
-                    description: ceph.smb.share
-                    type: string
-                  share_id:
-                    description: Unique identifier for the share
-                    type: string
-                  write_bw_limit:
-                    description: 'QoS: max write bandwidth B/s (0=disabled)'
-                    type: integer
-                  write_delay_max:
-                    description: 'QoS: max write delay in seconds (0-300)'
-                    type: integer
-                  write_iops_limit:
-                    description: 'QoS: max write IOPS (0=disabled)'
-                    type: integer
-                required: *id158
                 type: object
           description: OK
         '400':
@@ -24969,7 +26839,7 @@ paths:
                             write_iops_limit:
                               description: 'QoS: max write IOPS (0=disabled)'
                               type: integer
-                          required: &id160
+                          required:
                           - resource_type
                           - cluster_id
                           - share_id
@@ -25004,94 +26874,6 @@ paths:
                 required: &id162
                 - results
                 - success
-                type: object
-            application/vnd.ceph.api.v1.0+json:
-              schema:
-                properties:
-                  results:
-                    description: List of operation results
-                    items:
-                      properties:
-                        resource:
-                          description: Resource
-                          properties:
-                            browseable:
-                              description: Indicates if the share is browseable
-                              type: boolean
-                            cephfs:
-                              description: Configuration for the CephFS share
-                              properties:
-                                path:
-                                  description: Path within the CephFS file system
-                                  type: string
-                                provider:
-                                  description: Provider of the CephFS share, e.g.,
-                                    'samba-vfs'
-                                  type: string
-                                subvolume:
-                                  description: Subvolume within the CephFS file system
-                                  type: string
-                                subvolumegroup:
-                                  description: Subvolume Group in CephFS file system
-                                  type: string
-                                volume:
-                                  description: Name of the CephFS file system
-                                  type: string
-                              required: *id159
-                              type: object
-                            cluster_id:
-                              description: Unique identifier for the cluster
-                              type: string
-                            intent:
-                              description: Desired state of the resource, e.g., 'present'
-                                or 'removed'
-                              type: string
-                            name:
-                              description: Name of the share
-                              type: string
-                            read_bw_limit:
-                              description: 'QoS: max read bandwidth B/s (0=disabled)'
-                              type: integer
-                            read_delay_max:
-                              description: 'QoS: max read delay in seconds (0-300)'
-                              type: integer
-                            read_iops_limit:
-                              description: 'QoS: max read IOPS (0=disabled)'
-                              type: integer
-                            readonly:
-                              description: Indicates if the share is read-only
-                              type: boolean
-                            resource_type:
-                              description: ceph.smb.share
-                              type: string
-                            share_id:
-                              description: Unique identifier for the share
-                              type: string
-                            write_bw_limit:
-                              description: 'QoS: max write bandwidth B/s (0=disabled)'
-                              type: integer
-                            write_delay_max:
-                              description: 'QoS: max write delay in seconds (0-300)'
-                              type: integer
-                            write_iops_limit:
-                              description: 'QoS: max write IOPS (0=disabled)'
-                              type: integer
-                          required: *id160
-                          type: object
-                        state:
-                          description: The current state of the resource,                        e.g.,
-                            'created', 'updated', 'deleted'
-                          type: string
-                        success:
-                          description: Indicates if the operation was successful
-                          type: boolean
-                      required: *id161
-                      type: object
-                    type: array
-                  success:
-                    description: Indicates if the overall operation was successful
-                    type: boolean
-                required: *id162
                 type: object
           description: Resource created.
         '202':
@@ -25159,21 +26941,13 @@ paths:
       responses:
         '200':
           content:
-            application/json:
-              schema:
-                type: object
             application/vnd.ceph.api.v1.0+json:
-              schema:
-                type: object
+              type: object
           description: Resource updated.
         '202':
           content:
-            application/json:
-              schema:
-                type: object
             application/vnd.ceph.api.v1.0+json:
-              schema:
-                type: object
+              type: object
           description: Operation is still executing. Please check the task queue.
         '400':
           description: Operation exception. Please check the response body for details.
@@ -25328,7 +27102,7 @@ paths:
                   write_iops_limit:
                     description: 'QoS: max write IOPS (0=disabled)'
                     type: integer
-                required: &id164
+                required:
                 - resource_type
                 - cluster_id
                 - share_id
@@ -25343,71 +27117,6 @@ paths:
                 - write_bw_limit
                 - read_delay_max
                 - write_delay_max
-                type: object
-            application/vnd.ceph.api.v1.0+json:
-              schema:
-                properties:
-                  browseable:
-                    description: Indicates if the share is browseable
-                    type: boolean
-                  cephfs:
-                    description: Configuration for the CephFS share
-                    properties:
-                      path:
-                        description: Path within the CephFS file system
-                        type: string
-                      provider:
-                        description: Provider of the CephFS share, e.g., 'samba-vfs'
-                        type: string
-                      subvolume:
-                        description: Subvolume within the CephFS file system
-                        type: string
-                      subvolumegroup:
-                        description: Subvolume Group in CephFS file system
-                        type: string
-                      volume:
-                        description: Name of the CephFS file system
-                        type: string
-                    required: *id163
-                    type: object
-                  cluster_id:
-                    description: Unique identifier for the cluster
-                    type: string
-                  intent:
-                    description: Desired state of the resource, e.g., 'present' or
-                      'removed'
-                    type: string
-                  name:
-                    description: Name of the share
-                    type: string
-                  read_bw_limit:
-                    description: 'QoS: max read bandwidth B/s (0=disabled)'
-                    type: integer
-                  read_delay_max:
-                    description: 'QoS: max read delay in seconds (0-300)'
-                    type: integer
-                  read_iops_limit:
-                    description: 'QoS: max read IOPS (0=disabled)'
-                    type: integer
-                  readonly:
-                    description: Indicates if the share is read-only
-                    type: boolean
-                  resource_type:
-                    description: ceph.smb.share
-                    type: string
-                  share_id:
-                    description: Unique identifier for the share
-                    type: string
-                  write_bw_limit:
-                    description: 'QoS: max write bandwidth B/s (0=disabled)'
-                    type: integer
-                  write_delay_max:
-                    description: 'QoS: max write delay in seconds (0-300)'
-                    type: integer
-                  write_iops_limit:
-                    description: 'QoS: max write IOPS (0=disabled)'
-                    type: integer
-                required: *id164
                 type: object
           description: OK
         '400':
@@ -28026,6 +29735,8 @@ servers:
 tags:
 - description: Initiate a session with Ceph
   name: Auth
+- description: Call Home Management API
+  name: CallHome
 - description: Cephfs Snapshot Scheduling API
   name: CephFSSnapshotSchedule
 - description: CephFS Subvolume Management API
@@ -28064,6 +29775,8 @@ tags:
   name: Iscsi
 - description: Get Iscsi Target Details
   name: IscsiTarget
+- description: License Management API
+  name: License
 - description: Logs Management API
   name: Logs
 - description: Mds Perf Counters Management API
@@ -28118,6 +29831,8 @@ tags:
   name: RbdGroup
 - description: RBD Group Snapshot Management API
   name: RbdGroupSnapshot
+- description: RBD Mirror Group Management API
+  name: RbdMirrorGroup
 - description: RBD Mirroring Management API
   name: RbdMirroring
 - description: RBD Mirroring Pool Bootstrap Management API

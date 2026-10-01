@@ -30,7 +30,7 @@ import { NotificationService } from '~/app/shared/services/notification.service'
 import { TaskWrapperService } from '~/app/shared/services/task-wrapper.service';
 import { ModalCdsService } from '~/app/shared/services/modal-cds.service';
 import { DriveGroup } from '../osd/osd-form/drive-group.model';
-import { Icons } from '~/app/shared/enum/icons.enum';
+import { IconSize } from '~/app/shared/enum/icons.enum';
 
 const STEP_LABELS = {
   ADD_HOSTS: $localize`Add Hosts`,
@@ -73,7 +73,7 @@ export class CreateClusterComponent implements OnInit, OnDestroy {
   selectedOption = {};
   simpleDeployment = true;
   stepsToSkip: { [steps: string]: boolean } = {};
-  icons = Icons;
+  iconSize = IconSize;
 
   constructor(
     private authStorageService: AuthStorageService,
@@ -97,10 +97,12 @@ export class CreateClusterComponent implements OnInit, OnDestroy {
       }
     });
 
-    this.osdService.getDeploymentOptions().subscribe((options) => {
-      this.deploymentOption = options;
-      this.selectedOption = { option: options.recommended_option, encrypted: false };
-    });
+    if (this.permissions.osd?.read) {
+      this.osdService.getDeploymentOptions().subscribe((options) => {
+        this.deploymentOption = options;
+        this.selectedOption = { option: options.recommended_option, encrypted: false };
+      });
+    }
 
     this.steps.forEach((step) => {
       this.stepsToSkip[step.label] = false;

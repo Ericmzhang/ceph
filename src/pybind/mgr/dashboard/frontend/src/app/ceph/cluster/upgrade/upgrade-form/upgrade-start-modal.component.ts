@@ -12,6 +12,9 @@ import { UpgradeInfoInterface } from '~/app/shared/models/upgrade.interface';
 import { NotificationType } from '~/app/shared/enum/notification-type.enum';
 import { CdFormGroup } from '~/app/shared/forms/cd-form-group';
 import { NotificationService } from '~/app/shared/services/notification.service';
+import { LicenceAgreementComponent } from '../../license-agreement/license-agreement.component';
+import { ModalCdsService } from '~/app/shared/services/modal-cds.service';
+import { ClusterService } from '~/app/shared/api/cluster.service';
 
 @Component({
   selector: 'cd-upgrade-start-modal.component',
@@ -26,15 +29,20 @@ export class UpgradeStartModalComponent implements OnInit {
   upgradeForm: CdFormGroup;
   icons = Icons;
   versions: string[];
+  licenseAccepted = false;
 
   showImageField = false;
+  imageFetchError = false;
+  imageFetchErrorMessage = '';
 
   constructor(
     public actionLabels: ActionLabelsI18n,
     private authStorageService: AuthStorageService,
     public activeModal: NgbActiveModal,
     private upgradeService: UpgradeService,
-    private notificationService: NotificationService
+    private notificationService: NotificationService,
+    private modalCdsService: ModalCdsService,
+    private clusterService: ClusterService
   ) {
     this.permission = this.authStorageService.getPermissions().configOpt;
   }
@@ -54,10 +62,45 @@ export class UpgradeStartModalComponent implements OnInit {
     }
   }
 
+  showLicenceAgreement() {
+    const customImageName = this.upgradeForm.getValue('customImageName');
+
+    // Clear previous error
+    this.imageFetchError = false;
+    this.imageFetchErrorMessage = '';
+
+    // Validate image by fetching license first
+    this.clusterService.getLicense(customImageName).subscribe({
+      next: (licenseData: { call_home_notice: string; license: string }) => {
+        // Image is valid, open license modal with pre-fetched data
+        const modalRef = this.modalCdsService.show(LicenceAgreementComponent, {
+          customImageName: customImageName,
+          licenseData: licenseData
+        });
+        modalRef.acceptanceEvent.subscribe((accepted: boolean) => {
+          if (accepted) {
+            this.licenseAccepted = true;
+            this.startUpgrade();
+          } else {
+            // User declined - reset loading state
+            this.upgradeForm.setErrors({ cdSubmitButton: true });
+          }
+        });
+      },
+      error: (error) => {
+        // Image validation failed - show error in upgrade dialog
+        this.upgradeForm.setErrors({ cdSubmitButton: true });
+        this.imageFetchError = true;
+        this.imageFetchErrorMessage =
+          error?.error?.detail || 'Image may not exist or may not be accessible';
+      }
+    });
+  }
+
   startUpgrade() {
     const version = this.upgradeForm.getValue('availableVersions');
     const image = this.upgradeForm.getValue('customImageName');
-    this.upgradeService.start(version, image).subscribe({
+    this.upgradeService.start(version, image, this.licenseAccepted).subscribe({
       next: () => {
         this.notificationService.show(
           NotificationType.success,

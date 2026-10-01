@@ -84,7 +84,7 @@ export class ServicesComponent extends ListWithDetails implements OnChanges, OnI
   isLoadingServices = false;
   selection: CdTableSelection = new CdTableSelection();
   icons = Icons;
-  serviceUrls = { grafana: '', prometheus: '', alertmanager: '' };
+  serviceUrls = { grafana: '', prometheus: '', alertmanager: '', 'object-browser': '' };
   isMgmtGateway: boolean = false;
   statusIconMap = CERTIFICATE_STATUS_ICON_MAP;
 
@@ -244,6 +244,13 @@ export class ServicesComponent extends ListWithDetails implements OnChanges, OnI
       }
     }
     if (action === 'update') {
+      if (
+        this.selection.first()?.service_type === 'container' &&
+        this.selection.first()?.service_name === 'container.object-browser'
+      ) {
+        return false;
+      }
+
       const disableEditServices = ['osd', 'container'];
       if (disableEditServices.indexOf(this.selection.first()?.service_type) >= 0) {
         return true;
@@ -272,6 +279,7 @@ export class ServicesComponent extends ListWithDetails implements OnChanges, OnI
           return !this.hiddenServices.includes(col.service_name);
         });
         this.isLoadingServices = false;
+        this.formObjectBrowserUrl();
       },
       () => {
         this.isLoadingServices = false;
@@ -347,6 +355,38 @@ export class ServicesComponent extends ListWithDetails implements OnChanges, OnI
         return '-';
       default:
         return formattedDate ? `${cert.status} - ${formattedDate}` : cert.status;
+    }
+  }
+
+  private formObjectBrowserUrl() {
+    const objectBrowserService = this.services.find(
+      (service: CephServiceSpec) =>
+        service.service_type === 'container' && service.service_id === 'object-browser'
+    );
+
+    if (objectBrowserService && objectBrowserService.status.running > 0) {
+      this.cephServiceService.getDaemons(objectBrowserService.service_name).subscribe((daemons) => {
+        const files = objectBrowserService.spec?.files || {};
+        const sslCert = files['CERT_DIR/tls.crt'] || '';
+        const sslKey = files['CERT_DIR/tls.key'] || '';
+        const sslEnabled = sslCert && sslKey && sslCert.length > 0 && sslKey.length > 0;
+        const protocol = sslEnabled ? 'https' : 'http';
+        const targetContainerPort = sslEnabled ? '8443' : '8080';
+
+        const daemon = daemons.find((d) => d.daemon_type === 'container');
+        if (daemon) {
+          let hostPort = daemon.ports && daemon.ports.length > 0 ? daemon.ports[0] : null;
+          const args: string[] = objectBrowserService.spec?.args || [];
+          const portMapping = args.find(
+            (arg) => typeof arg === 'string' && arg.endsWith(`:${targetContainerPort}`)
+          );
+          if (portMapping) hostPort = portMapping.split(':')[0];
+
+          if (hostPort) {
+            this.serviceUrls['object-browser'] = `${protocol}://${daemon.hostname}:${hostPort}`;
+          }
+        }
+      });
     }
   }
 }

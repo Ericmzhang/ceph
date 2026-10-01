@@ -46,9 +46,8 @@ describe('AboutComponent', () => {
   });
 
   it('should parse version', () => {
-    expect(component.versionNumber).toBe('14.0.0-855-gb8193bb4cd');
-    expect(component.versionHash).toBe('(b8193bb4cda16ccc5b028c3e1df62bc72350a15d)');
-    expect(component.versionName).toBe('nautilus (dev)');
+    expect(component.version).toBe('14.0.0-855-gb8193bb4cd');
+    expect(component.release).toBe('-');
   });
 
   it('should get host', () => {

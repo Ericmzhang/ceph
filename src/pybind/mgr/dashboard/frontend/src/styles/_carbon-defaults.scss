@@ -10,7 +10,7 @@
 @use '@carbon/styles/scss/compat/themes' as compat;
 @use '@carbon/styles/scss/themes';
 @use '@carbon/styles/scss/theme' with (
-  $theme: default.$theme,
+  $theme: compat.$g100,
   $fallback: compat.$g90,
   );
 
@@ -171,6 +171,14 @@ Forms
 
 .padding-inline-0 {
   padding-inline: 0;
+}
+
+/******************************************
+CSS Grid
+******************************************/
+.cds--css-grid.padding-inline-0 > .cds--css-grid-column.padding-inline-0 {
+  margin-left: 0;
+  padding-left: 0;
 }
 
 /******************************************

@@ -18,6 +18,7 @@ import { NotificationService } from '~/app/shared/services/notification.service'
 import { PrometheusAlertService } from '~/app/shared/services/prometheus-alert.service';
 import { SummaryService } from '~/app/shared/services/summary.service';
 import { USER } from '~/app/shared/constants/app.constants';
+import { environment } from '~/environments/environment';
 
 @Component({
   selector: 'cd-navigation',
@@ -42,6 +43,7 @@ export class NavigationComponent implements OnInit, OnDestroy {
   @ViewChild('sidenavContainer') sidenavContainer: ElementRef;
   private subs = new Subscription();
 
+  environment = environment;
   clustersMap: Map<string, any> = new Map<string, any>();
   selectedCluster: {
     name: string;
@@ -100,6 +102,10 @@ export class NavigationComponent implements OnInit, OnDestroy {
         this.checkClusterConnectionStatus();
       })
     );
+  }
+
+  toggleSidebar() {
+    this.notificationService.togglePanel(!this.notificationService.getPanelState());
   }
 
   checkClusterConnectionStatus() {
@@ -202,7 +208,7 @@ export class NavigationComponent implements OnInit, OnDestroy {
     );
   }
 
-  onNotificationSelected(event) {
+  onNotificationSelected(event: Event) {
     event.stopPropagation();
     const currentState = this.notificationService.getPanelState();
     this.notificationService.setPanelState(!currentState);

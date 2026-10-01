@@ -7,6 +7,7 @@ import { AuthService } from '~/app/shared/api/auth.service';
 import { Credentials } from '~/app/shared/models/credentials';
 import { AuthStorageService } from '~/app/shared/services/auth-storage.service';
 import { ModalService } from '~/app/shared/services/modal.service';
+import { environment } from '~/environments/environment';
 
 @Component({
   selector: 'cd-login',
@@ -19,6 +20,12 @@ export class LoginComponent implements OnInit {
   isLoginActive = false;
   returnUrl: string;
   postInstalled = false;
+  environment = environment;
+  docItems: any[] = [
+    { section: 'privacy', text: $localize`Privacy` },
+    { section: 'terms', text: $localize`Terms of use` }
+  ];
+  errorMessage = '';
 
   constructor(
     private authService: AuthService,
@@ -65,17 +72,28 @@ export class LoginComponent implements OnInit {
   }
 
   login() {
+    this.errorMessage = '';
     localStorage.setItem('cluster_api_url', window.location.origin);
-    this.authService.login(this.model).subscribe(() => {
-      const urlPath = this.postInstalled ? '/' : '/add-storage';
-      let url = _.get(this.route.snapshot.queryParams, 'returnUrl', urlPath);
-      if (!this.postInstalled && this.route.snapshot.queryParams['returnUrl'] === '/overview') {
-        url = '/add-storage';
-      }
-      if (url === '/add-storage') {
-        this.router.navigate([url], { queryParams: { welcome: true } });
-      } else {
-        this.router.navigate([url]);
+    this.authService.login(this.model).subscribe({
+      next: () => {
+        const permissions = this.authStorageService.getPermissions();
+        const canSetupCluster = !this.postInstalled && permissions.configOpt?.update;
+        const urlPath = canSetupCluster ? '/add-storage' : '/';
+        let url = _.get(this.route.snapshot.queryParams, 'returnUrl', urlPath);
+        if (canSetupCluster && this.route.snapshot.queryParams['returnUrl'] === '/overview') {
+          url = '/add-storage';
+        }
+        if (url === '/add-storage') {
+          this.router.navigate([url], { queryParams: { welcome: true } });
+        } else {
+          this.router.navigate([url]);
+        }
+      },
+      error: (err) => {
+        err.preventDefault();
+        this.errorMessage = err.error?.detail || $localize`Invalid credentials`;
+        this.model.password = '';
+        document.getElementById('username')?.focus();
       }
     });
   }

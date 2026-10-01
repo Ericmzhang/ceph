@@ -18,7 +18,7 @@
     <!-- CLUSTER SWITCHER TEMPLATE -->
     <!-- ************************* -->
     <cds-header-navigation class="cluster-switcher"
-                           *ngIf="clustersMap?.size > 1">
+                           *ngIf="clustersMap?.size > 1 && environment.build === 'ibm'">
       <cds-header-menu [title]="currentClusterName"
                        data-testid="selected-cluster">
         <ng-container *ngFor="let cluster of clustersMap | keyvalue; trackBy:trackByFn ">
@@ -32,20 +32,27 @@
     </cds-header-navigation>
     <cds-header-global>
       <cds-header-navigation>
-        <cd-language-selector class="d-flex"></cd-language-selector>
+        <cd-language-selector class="d-flex"
+                              *ngIf="environment.build === 'ibm'"></cd-language-selector>
       </cds-header-navigation>
       <div class="cds--btn cds--btn--icon-only cds--header__action"
            data-testid="header-notification-icon"
-           (click)="onNotificationSelected($event)">
+           (click)="toggleSidebar()">
         <cd-notifications></cd-notifications>
       </div>
       <div class="cds--btn cds--btn--icon-only cds--header__action">
         <cd-dashboard-help></cd-dashboard-help>
       </div>
-      <div class="cds--btn cds--btn--icon-only cds--header__action"
-           *ngIf="permissions.user.read">
-        <cd-administration></cd-administration>
-      </div>
+      @if (
+        permissions.user.create ||
+        permissions.user.update ||
+        permissions.user.delete ||
+        permissions.configOpt.read
+      ) {
+        <div class="cds--btn cds--btn--icon-only cds--header__action tc_administration">
+          <cd-administration></cd-administration>
+        </div>
+      }
       <div class="cds--btn cds--btn--icon-only cds--header__action">
         <cd-identity></cd-identity>
       </div>
@@ -98,8 +105,8 @@
             Overview</span>
         </cds-sidenav-item>
         <!-- Multi-cluster Dashboard -->
-        <cds-sidenav-menu title="Multi-cluster"
-                          *ngIf="permissions.configOpt.read"
+        <cds-sidenav-menu title="Multi-Cluster"
+                          *ngIf="permissions.configOpt.read && !['ibm', 'redhat'].includes(environment.build)"
                           i18n-title>
           <svg cdsIcon="edge-cluster"
                icon
@@ -201,6 +208,7 @@
                             [useRouter]="true"
                             title="NVMe/TCP"
                             i18n-title
+                            *ngIf="environment.build === 'ibm'"
                             class="tc_submenuitem tc_submenuitem_block_nvme"><span i18n>NVMe/TCP</span></cds-sidenav-item>
         </cds-sidenav-menu>
         <!-- Object Storage -->
@@ -272,14 +280,12 @@
                             i18n-title
                             *ngIf="permissions.cephfs.read && enabledFeature.cephfs"
                             class="tc_submenuitem tc_submenuitem_file_cephfs"><span i18n>File systems</span></cds-sidenav-item>
-          <!-- Removed for umbrella release, will be re-enabled in next release
           <cds-sidenav-item route="/cephfs/mirroring"
                             [useRouter]="true"
                             title="Mirroring"
                             i18n-title
                             *ngIf="permissions.cephfs.read && enabledFeature.cephfs"
                             class="tc_submenuitem tc_submenuitem_file_cephfs"><span i18n>Mirroring</span></cds-sidenav-item>
-          -->
           <cds-sidenav-item route="/cephfs/nfs"
                             [useRouter]="true"
                             title="NFS"
@@ -290,7 +296,7 @@
                             [useRouter]="true"
                             title="SMB"
                             i18n-title
-                            *ngIf="permissions?.smb?.read"
+                            *ngIf="permissions.smb.read && environment.build === 'ibm'"
                             class="tc_submenuitem tc_submenuitem_file_smb"><span i18n>SMB</span></cds-sidenav-item>
         </cds-sidenav-menu>
         <!-- Observability -->
@@ -364,4 +370,4 @@
       </cds-sidenav>
     </ng-container>
   </ng-template>
-  </div>
+</div>

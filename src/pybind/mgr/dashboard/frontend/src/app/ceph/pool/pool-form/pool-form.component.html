@@ -11,7 +11,7 @@
       novalidate
     >
       <div
-        i18n="form title|Example: Create Pool@@formTitle"
+        i18n="form title|Example: Create Pool@@poolFormTitle"
         class="form-header"
       >
         {{ action | titlecase }} {{ resource | upperFirst }}
@@ -552,7 +552,8 @@
                 <cd-table-key-value
                   [renderObjects]="true"
                   [hideKeys]="['name']"
-                  [data]="selectedEcp"
+                  [data]="getEcpProfileDetails()"
+                  [preserveOrder]="true"
                   [autoReload]="false"
                 >
                 </cd-table-key-value>
@@ -1180,7 +1181,7 @@
       <cd-form-button-panel
         (submitActionEvent)="submit()"
         [form]="form"
-        [submitText]="(action | titlecase) + ' ' + (resource | upperFirst)"
+        [submitText]="submitAction"
         wrappingClass="text-right form-button"
       >
       </cd-form-button-panel>

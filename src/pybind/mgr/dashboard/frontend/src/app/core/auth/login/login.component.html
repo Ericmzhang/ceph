@@ -1,10 +1,24 @@
-<div class="container"
-     *ngIf="isLoginActive">
+<div
+  class="container"
+  *ngIf="isLoginActive"
+>
   <h1 class="cds--visually-hidden">Ceph login</h1>
-  <form name="loginForm"
-        (ngSubmit)="login()"
-        #loginForm="ngForm"
-        novalidate>
+  <form
+    name="loginForm"
+    (ngSubmit)="login()"
+    #loginForm="ngForm"
+    novalidate
+  >
+    @if (errorMessage) {
+      <cd-alert-panel
+        type="danger"
+        [dismissible]="true"
+        (dismissed)="errorMessage = ''"
+        [showTitle]="false"
+      >
+        {{ errorMessage }}
+      </cd-alert-panel>
+    }
 
     <!-- Username -->
     <div class="form-group has-feedback d-flex flex-column py-3">
@@ -19,6 +33,7 @@
              [attr.aria-invalid]="username.invalid"
              aria-labelledby="username"
              class="form-control ps-3"
+             placeholder="Username"
              required
              autofocus>
       <div class="invalid-feedback ps-3"
@@ -42,6 +57,7 @@
                  [attr.aria-invalid]="password.invalid"
                  aria-labelledby="password"
                  class="form-control ps-3"
+                 placeholder="Password"
                  required>
           <div class="invalid-feedback ps-3"
                *ngIf="(loginForm.submitted || password.dirty) && password.invalid"
@@ -57,10 +73,24 @@
       </div>
     </div>
 
-    <input type="submit"
-           class="btn btn-accent px-5 py-2"
-           [disabled]="loginForm.invalid"
-           value="Log in"
-           i18n-value>
+    <div class="login-buttons">
+      <input type="submit"
+             class="btn btn-accent px-5 py-2"
+             [disabled]="loginForm.invalid"
+             value="Log in"
+             i18n-value>
+      <i [ngClass]="{'btn-arrow': true, 'btn-arrow-disabled': loginForm.invalid}"></i>
+    </div>
   </form>
 </div>
+
+<ul class="list-inline"
+    *ngIf="environment.build === 'ibm'">
+  <li class="list-inline-item p-3"
+      *ngFor="let docItem of docItems">
+    <cd-doc section="{{ docItem.section }}"
+            docText="{{ docItem.text }}"
+            noSubscribe="true"
+            i18n-docText></cd-doc>
+  </li>
+</ul>

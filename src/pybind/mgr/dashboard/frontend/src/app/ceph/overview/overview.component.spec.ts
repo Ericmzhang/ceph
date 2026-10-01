@@ -20,6 +20,7 @@ import { MgrModuleService } from '~/app/shared/api/mgr-module.service';
 import { AuthStorageService } from '~/app/shared/services/auth-storage.service';
 import { OverviewStorageService } from '~/app/shared/api/storage-overview.service';
 import { PrometheusService } from '~/app/shared/api/prometheus.service';
+import { CallHomeService } from '~/app/shared/api/call-home.service';
 
 describe('OverviewComponent', () => {
   let component: OverviewComponent;
@@ -110,7 +111,11 @@ describe('OverviewComponent', () => {
         { provide: PrometheusService, useValue: mockPrometheusService },
         { provide: AuthStorageService, useValue: mockAuthStorageService },
         { provide: MgrModuleService, useValue: mockMgrModuleService },
-        { provide: HardwareService, useValue: mockHardwareService }
+        { provide: HardwareService, useValue: mockHardwareService },
+        {
+          provide: CallHomeService,
+          useValue: { getCallHomeStatus: () => of(false), status: () => of(null) }
+        }
       ]
     })
       .overrideComponent(OverviewComponent, {
@@ -256,7 +261,7 @@ describe('OverviewComponent', () => {
     mockRefreshIntervalService.intervalData$.complete();
   });
 
-  it('storageCardVm$ should emit storage view model with mapped fields', fakeAsync((done) => {
+  it('storageCardVm$ should emit storage view model with mapped fields', fakeAsync(() => {
     const mockData: HealthSnapshotMap = {
       fsid: 'fsid-storage',
       health: { status: 'HEALTH_OK', checks: {} },
@@ -308,7 +313,6 @@ describe('OverviewComponent', () => {
       expect(mockOverviewStorageService.mapStorageChartData).toHaveBeenCalled();
 
       sub.unsubscribe();
-      done();
     });
 
     tick(0);

@@ -88,6 +88,7 @@ export enum Icons {
   idea = 'idea',
   userAccessLocked = 'user--access-locked', // User access locked
   chevronDown = 'chevron--down',
+  chevronUp = 'chevron--up',
   connect = 'connect',
   checkmarkOutline = 'checkmark--outline',
   circleDash = 'circle-dash',
@@ -120,11 +121,15 @@ export enum Icons {
   vmdkDisk = 'vmdk-disk',
   checkMarkOutline = 'checkmark--outline',
   warningAlt = 'warning--alt',
+  arrowRight = 'arrow--right',
   arrowUpRight = 'arrow--up-right',
   inProgress = 'in-progress',
   arrowDown = 'arrow--down',
   locked = 'locked', // Access denied, locked state
-  cloudMonitoring = 'cloud--monitoring'
+  cloudMonitoring = 'cloud--monitoring',
+  pendingFilled = 'pending--filled',
+  folder = 'folder',
+  temperature = 'temperature'
 }
 
 export enum IconSize {
@@ -163,7 +168,9 @@ export const ICON_TYPE = {
   vmdkDisk: 'vmdk-disk',
   warningAlt: 'warning--alt',
   checkMarkOutline: 'checkmark--outline',
-  arrowUpRight: ' arrow--up-right',
+  arrowRight: 'arrow--right',
+  arrowUpRight: 'arrow--up-right',
+  right: 'arrow--right',
   inProgress: 'in-progress',
   arrowDown: 'arrow--down',
   destroy: 'close',
@@ -174,6 +181,19 @@ export const ICON_TYPE = {
   leftArrow: 'caret--left',
   rightArrow: 'caret--right',
   locked: 'locked',
+  ibmCloudBareMetalServer: 'ibm-cloud--bare-metal-server',
+  ibmCloudDedicatedHost: 'ibm-cloud--dedicated-host',
+  clusterIcon: 'web-services--cluster',
+  download: 'download',
+  trash: 'trash-can',
+  replicate: 'replicate',
+  share: 'share',
+  pendingFilled: 'pending--filled',
+  chevronDown: 'chevron--down',
+  chevronUp: 'chevron--up',
+  folder: 'folder',
+  temperature: 'temperature',
+  left: 'arrow--left',
   cloudMonitoring: 'cloud--monitoring'
 } as const;
 

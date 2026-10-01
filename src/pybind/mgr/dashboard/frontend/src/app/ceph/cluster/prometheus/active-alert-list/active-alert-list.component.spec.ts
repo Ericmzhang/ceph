@@ -100,4 +100,34 @@ describe('ActiveAlertListComponent', () => {
       }
     });
   });
+
+  describe('alertDocUrls', () => {
+    beforeEach(() => component.ngOnInit());
+
+    it('should be empty and hasDocUrls false by default (no upstream doc URL)', () => {
+      expect(component.hasDocUrls).toBe(false);
+      expect(component.alertDocUrls).toEqual({});
+    });
+
+    it('should remain empty when alerts arrive and hasDocUrls is false', () => {
+      component['prometheusAlertService'].alerts = [
+        { labels: { alertname: 'CephHealthError' } } as any
+      ];
+      component['prometheusAlertService']['totalSubject'].next(1);
+      expect(component.alertDocUrls).toEqual({});
+    });
+
+    it('should populate map when hasDocUrls is true and alerts arrive', () => {
+      spyOn(component['docService'], 'urlGenerator').and.returnValue('https://example.com/docs');
+      spyOn(component['docService'], 'alertDocUrl').and.returnValue(
+        'https://example.com/docs#managing-alerts__cephhealtherror'
+      );
+      component['docService']['releaseDataSource'].next('7');
+      component['prometheusAlertService'].alerts = [
+        { labels: { alertname: 'CephHealthError' } } as any
+      ];
+      component['prometheusAlertService']['totalSubject'].next(1);
+      expect(component.alertDocUrls['CephHealthError']).toContain('cephhealtherror');
+    });
+  });
 });

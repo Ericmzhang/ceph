@@ -3,12 +3,23 @@ import { Injectable } from '@angular/core';
 import { environment } from '~/environments/environment';
 
 export class AppConstants {
-  public static readonly organization = 'ceph';
-  public static readonly projectName = 'Ceph Dashboard';
+  public static readonly version = '9';
+  public static readonly organization = environment.build === 'ibm' ? 'IBM' : 'Redhat';
+  public static readonly projectName =
+    environment.build === 'ibm' ? 'IBM Storage Ceph' : 'Red Hat Ceph Storage';
+  public static readonly license =
+    environment.build === 'ibm'
+      ? 'Licenced materials - Property of IBM Corporation and IBM Storage Ceph are trademarks or registered trademarks of International Business Machine Corporation.'
+      : 'Licensed under Creative Commons Attribution Share Alike 3.0 (CC-BY-SA-3.0)';
+  public static readonly copyright =
+    environment.build === 'ibm'
+      ? `Copyright(c) ${environment.year} IBM Corporation`
+      : 'Copyright(c) ' + environment.year + ' Red Hat Inc. and contributors.';
+  public static readonly cephLogo =
+    environment.build === 'ibm'
+      ? 'assets/StorageCeph_dark_theme.svg'
+      : 'assets/Logo-RedHat-Hat-Color-RGB.png';
   public static readonly defaultUser = 'dashboard';
-  public static readonly license = 'Free software (LGPL 2.1).';
-  public static readonly copyright = 'Copyright(c) ' + environment.year + ' Ceph contributors.';
-  public static readonly cephLogo = 'assets/Ceph_Logo.svg';
 }
 
 export enum URLVerbs {
@@ -109,6 +120,8 @@ export class ActionLabelsI18n {
   MOVE: string;
   NEXT: string;
   BACK: string;
+  PREVIOUS: string;
+  CREATING: string;
   CHANGE: string;
   COPY: string;
   CLONE: string;
@@ -165,6 +178,8 @@ export class ActionLabelsI18n {
   SETUP_MULTISITE_REPLICATION: string;
   NFS_EXPORT: string;
   VIEW: string;
+  EDIT_GATEWAYS_GROUP: string;
+  SAVE_CHANGES: string;
   constructor() {
     /* Create a new item */
     this.CREATE = $localize`Create`;
@@ -199,6 +214,8 @@ export class ActionLabelsI18n {
     /* Wizard wording */
     this.NEXT = $localize`Next`;
     this.BACK = $localize`Back`;
+    this.PREVIOUS = $localize`Previous`;
+    this.CREATING = $localize`Creating`;
 
     /* Non-standard actions */
     this.CLONE = $localize`Clone`;
@@ -257,6 +274,8 @@ export class ActionLabelsI18n {
 
     this.NFS_EXPORT = $localize`Create NFS Share`;
     this.VIEW = $localize`View`;
+    this.EDIT_GATEWAYS_GROUP = $localize`Edit gateways group`;
+    this.SAVE_CHANGES = $localize`Save changes`;
   }
 }
 
@@ -388,6 +407,7 @@ export const USER = 'user';
 export const VERSION_PREFIX = 'ceph version';
 
 export const CEPHFS_MIRRORING_PAGE_HEADER = {
-  title: $localize`CephFS Mirroring`,
-  description: $localize`Centralised view of all CephFS Mirroring relationships.`
+  title: $localize`Filesystem Mirroring`,
+  subtitle: $localize`Manage snapshot-based replication for CephFS across clusters.`,
+  description: $localize`Configure mirroring between filesystems and monitor replication status.`
 };

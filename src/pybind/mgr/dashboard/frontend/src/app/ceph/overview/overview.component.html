@@ -10,6 +10,14 @@
 @let health = (healthCardVm$ | async);
 @let storageEmptyState = (storageEmptyState$ | async);
 @let prometheusEmptyState = (prometheusEmptyState$ | async);
+@let callHomeEnabledWarning = (callHomeEnabledWarning$ | async);
+@let callHomeEnabled = (callHomeStatus$ | async);
+
+@if (environment.build === 'ibm' && permissions?.configOpt?.read) {
+<cd-call-home-notification [callHomeEnabled]="callHomeEnabled"
+                           [callHomeEnabledWarning]="callHomeEnabledWarning"></cd-call-home-notification>
+<cd-storage-insights-notification></cd-storage-insights-notification>
+}
 <main cdsGrid
       [fullWidth]="true"
       [narrow]="true"

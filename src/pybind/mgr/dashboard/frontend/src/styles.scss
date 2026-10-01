@@ -211,8 +211,9 @@ input:-webkit-autofill:active {
 }
 
 .cds--progress-bar__bar {
-  background-color: var(--cds-primary);
+  background-color: var(--cds-interactive);
 }
+
 // Carbon borders
 .border-subtle {
   border: 1px solid var(--cds-border-subtle);
@@ -240,4 +241,19 @@ input:-webkit-autofill:active {
 
 .popover {
   --bs-popover-zindex: 9999;
+}
+
+// Remove bottom border from NVMeoF gateway group filter combobox
+.nvmeof-gateway-group-filter__combo {
+  .cds--combo-box,
+  .cds--text-input,
+  .cds--list-box,
+  input[role='combobox'],
+  input {
+    border-bottom: none !important;
+  }
+
+  .cds--text-input__field-wrapper {
+    border-bottom: none !important;
+  }
 }
