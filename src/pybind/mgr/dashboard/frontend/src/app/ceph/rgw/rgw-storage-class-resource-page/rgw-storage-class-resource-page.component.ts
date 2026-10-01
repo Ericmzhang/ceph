@@ -26,7 +26,14 @@ import {
 } from '../models/rgw-storage-class.model';
 import { BucketTieringUtils } from '../utils/rgw-bucket-tiering';
 import { RgwZonegroupService } from '~/app/shared/api/rgw-zonegroup.service';
-import { OverviewField } from '~/app/shared/components/resource-overview-card/resource-overview-card.component';
+
+interface OverviewField {
+  label: string;
+  value?: string;
+  helperText?: string;
+  emptyText?: string;
+  type?: string;
+}
 import { RgwZoneService } from '~/app/shared/api/rgw-zone.service';
 import { FormatterService } from '~/app/shared/services/formatter.service';
 

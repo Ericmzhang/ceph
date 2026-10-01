@@ -45,7 +45,9 @@ export class NotificationItemComponent {
 
   readonly NotificationApplication = NotificationApplication;
   readonly brandIcon =
-    environment.build === 'ibm' ? 'assets/StorageCeph_favicon.svg' : 'assets/RedHat_favicon_0319.svg';
+    environment.build === 'ibm'
+      ? 'assets/StorageCeph_favicon.svg'
+      : 'assets/RedHat_favicon_0319.svg';
 
   constructor(private notificationService: NotificationService) {}
 

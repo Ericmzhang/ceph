@@ -4,7 +4,6 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
-import { ToastrModule } from 'ngx-toastr';
 import { SharedModule } from '~/app/shared/shared.module';
 import { configureTestBed } from '~/testing/unit-test-helper';
 import { LicenceAgreementComponent } from './license-agreement.component';
@@ -24,13 +23,7 @@ describe('LicenceAgreementComponent', () => {
 
   configureTestBed({
     declarations: [LicenceAgreementComponent],
-    imports: [
-      FormsModule,
-      ToastrModule.forRoot(),
-      SharedModule,
-      ReactiveFormsModule,
-      CheckboxModule
-    ],
+    imports: [FormsModule, SharedModule, ReactiveFormsModule, CheckboxModule],
     providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])]
   });
 

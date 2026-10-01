@@ -114,7 +114,9 @@ export class OverviewHealthCardComponent {
 
   private readonly permissions = this.authStorageService.getPermissions();
 
-  readonly summary$: Observable<Summary> = this.summaryService.summaryData$.pipe(filter((summary): summary is Summary => !!summary));
+  readonly summary$: Observable<Summary> = this.summaryService.summaryData$.pipe(
+    filter((summary): summary is Summary => !!summary)
+  );
 
   readonly enabled$: Observable<boolean> = this.permissions?.configOpt?.read
     ? this.mgrModuleService.getConfig('cephadm').pipe(

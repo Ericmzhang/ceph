@@ -297,9 +297,7 @@ export class TearsheetComponent implements OnInit, AfterViewInit, OnDestroy, OnC
     // steps[].invalid for formless steps. Next stays enabled; we only show
     // field errors and refuse to leave the step.
     const form = this.getStepForm(wrapper);
-    const canAdvance = wrapper
-      ? wrapper.canProceed
-      : !this.steps[this.currentStep]?.invalid;
+    const canAdvance = wrapper ? wrapper.canProceed : !this.steps[this.currentStep]?.invalid;
     if (this.currentStep !== this.lastStep && canAdvance) {
       this._updateStepInvalid(this.currentStep, false);
       if (wrapper) {

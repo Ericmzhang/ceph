@@ -1027,7 +1027,7 @@ export class ServiceFormComponent extends CdForm implements OnInit {
               // accesskey, secretkey, endpoint, region are stored in envs as key=value pairs
               const envMap = {};
               if (spec.envs) {
-                spec.envs.forEach(envString => {
+                spec.envs.forEach((envString) => {
                   const [key, ...valueParts] = envString.split('=');
                   envMap[key] = valueParts.join('=');
                 });
@@ -1405,7 +1405,6 @@ export class ServiceFormComponent extends CdForm implements OnInit {
       this.serviceForm.get('count').enable();
     }
   }
-
 
   onPlacementChange(selected: string) {
     if (selected === 'label') {

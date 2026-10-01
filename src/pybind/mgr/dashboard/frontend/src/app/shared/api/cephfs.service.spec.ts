@@ -161,8 +161,7 @@ describe('CephfsService', () => {
     service.listMirrorCheckpoints('testfs', path).subscribe();
     const req = httpTesting.expectOne(
       (request) =>
-        request.url === 'api/cephfs/mirror/testfs/checkpoint' &&
-        request.params.get('path') === path
+        request.url === 'api/cephfs/mirror/testfs/checkpoint' && request.params.get('path') === path
     );
     expect(req.request.method).toBe('GET');
   });

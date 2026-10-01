@@ -11,7 +11,9 @@ export class MirroringSyncUtils {
     };
   }
 
-  static extractLatestSync(status: MirrorStatusResponse): {
+  static extractLatestSync(
+    status: MirrorStatusResponse
+  ): {
     syncingPaths: number;
     info: MirroringFsSyncInfo;
   } {

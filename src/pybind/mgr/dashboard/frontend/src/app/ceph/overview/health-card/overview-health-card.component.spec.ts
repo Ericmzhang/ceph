@@ -235,7 +235,6 @@ describe('OverviewHealthCardComponent (all healthy)', () => {
           provide: SummaryService,
           useValue: { summaryData$: of({ version: 'ceph version 18.0.0 reef (dev)' }) }
         },
-        { provide: UpgradeService, useValue: { listCached: jest.fn(() => of(null)) } },
         {
           provide: AuthStorageService,
           useValue: { getPermissions: jest.fn(() => ({ configOpt: { read: true } })) }
@@ -312,7 +311,6 @@ describe('OverviewHealthCardComponent (warn only)', () => {
           provide: SummaryService,
           useValue: { summaryData$: of({ version: 'ceph version 18.0.0 reef (dev)' }) }
         },
-        { provide: UpgradeService, useValue: { listCached: jest.fn(() => of(null)) } },
         {
           provide: AuthStorageService,
           useValue: { getPermissions: jest.fn(() => ({ configOpt: { read: true } })) }
@@ -374,7 +372,6 @@ describe('OverviewHealthCardComponent (hw disabled)', () => {
           provide: SummaryService,
           useValue: { summaryData$: of({ version: 'ceph version 18.0.0 reef (dev)' }) }
         },
-        { provide: UpgradeService, useValue: { listCached: jest.fn(() => of(null)) } },
         {
           provide: AuthStorageService,
           useValue: { getPermissions: jest.fn(() => ({ configOpt: { read: true } })) }
@@ -432,7 +429,6 @@ describe('OverviewHealthCardComponent (no permissions)', () => {
           provide: SummaryService,
           useValue: { summaryData$: of({ version: 'ceph version 18.0.0 reef (dev)' }) }
         },
-        { provide: UpgradeService, useValue: { listCached: jest.fn(() => of(null)) } },
         {
           provide: AuthStorageService,
           useValue: { getPermissions: jest.fn(() => ({ configOpt: { read: false } })) }

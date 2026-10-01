@@ -3,7 +3,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CallHomeNotificationComponent } from './call-home-notification.component';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { configureTestBed } from '~/testing/unit-test-helper';
-import { ToastrModule } from 'ngx-toastr';
 import { SharedModule } from '../../shared.module';
 
 describe('CallHomeNotificationComponent', () => {
@@ -11,7 +10,7 @@ describe('CallHomeNotificationComponent', () => {
   let fixture: ComponentFixture<CallHomeNotificationComponent>;
 
   configureTestBed({
-    imports: [HttpClientTestingModule, ToastrModule.forRoot(), SharedModule]
+    imports: [HttpClientTestingModule, SharedModule]
   });
 
   beforeEach(async () => {

@@ -244,7 +244,10 @@ export class ServicesComponent extends ListWithDetails implements OnChanges, OnI
       }
     }
     if (action === 'update') {
-      if (this.selection.first()?.service_type === 'container' && this.selection.first()?.service_name === 'container.object-browser') {
+      if (
+        this.selection.first()?.service_type === 'container' &&
+        this.selection.first()?.service_name === 'container.object-browser'
+      ) {
         return false;
       }
 
@@ -374,11 +377,14 @@ export class ServicesComponent extends ListWithDetails implements OnChanges, OnI
         if (daemon) {
           let hostPort = daemon.ports && daemon.ports.length > 0 ? daemon.ports[0] : null;
           const args: string[] = objectBrowserService.spec?.args || [];
-          const portMapping = args.find((arg) => typeof arg === 'string' && arg.endsWith(`:${targetContainerPort}`));
+          const portMapping = args.find(
+            (arg) => typeof arg === 'string' && arg.endsWith(`:${targetContainerPort}`)
+          );
           if (portMapping) hostPort = portMapping.split(':')[0];
 
-          if (hostPort)
+          if (hostPort) {
             this.serviceUrls['object-browser'] = `${protocol}://${daemon.hostname}:${hostPort}`;
+          }
         }
       });
     }

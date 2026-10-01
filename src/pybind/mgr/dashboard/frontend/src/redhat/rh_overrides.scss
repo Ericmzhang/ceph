@@ -34,19 +34,24 @@ $pf-global--image-path: '~@patternfly/patternfly/assets/images';
 }
 
 .cds--btn:disabled {
+  /* stylelint-disable-next-line custom-property-pattern */
   background-color: var(--pf-global--disabled-color--200) !important;
+  /* stylelint-disable-next-line custom-property-pattern */
   color: var(--pf-global--disabled-color--100) !important;
 }
 
 .cds--btn:hover {
   &:disabled {
+    /* stylelint-disable-next-line custom-property-pattern */
     background-color: var(--pf-global--disabled-color--200) !important;
+    /* stylelint-disable-next-line custom-property-pattern */
     color: var(--pf-global--disabled-color--100) !important;
   }
 }
 
 .cds--btn--tertiary {
   @extend .pf-c-button, .pf-m-tertiary;
+
   border-color: vv.$primary !important;
   color: vv.$primary !important;
 
@@ -55,6 +60,8 @@ $pf-global--image-path: '~@patternfly/patternfly/assets/images';
     background-color: vv.$primary !important;
     color: vv.$white !important;
   }
+
+  min-block-size: 0% !important;
 }
 
 .cds--btn--primary {
@@ -69,10 +76,6 @@ $pf-global--image-path: '~@patternfly/patternfly/assets/images';
   .cds--btn__icon {
     margin-left: 0 !important;
   }
-}
-
-.cds--btn--tertiary {
-  min-block-size: 0% !important;
 }
 
 .cds--btn--primary,
@@ -159,10 +162,6 @@ cd-form-button-panel {
         color: vv.$black;
       }
 
-      .input-group {
-        padding-top: 0;
-      }
-
       .container {
         background-color: vv.$white;
         position: relative;
@@ -176,6 +175,7 @@ cd-form-button-panel {
         label {
           @extend .pf-c-form__label-text;
 
+          /* stylelint-disable-next-line custom-property-pattern */
           color: var(--pf-global--Color--100);
           padding-left: 0 !important;
         }
@@ -246,6 +246,7 @@ cd-form-button-panel {
 
       .input-group {
         height: 90px !important;
+        padding-top: 0;
       }
 
       .btn-password {
@@ -1198,15 +1199,12 @@ h3:not(.cds--toast-notification__title) {
 cd-create-cluster {
   .img-fluid {
     height: auto !important;
+    max-width: 30%;
+    padding-bottom: 1rem;
   }
 
   .blank-page {
     margin-top: -10rem;
-  }
-
-  .img-fluid {
-    max-width: 30%;
-    padding-bottom: 1rem;
   }
 
   h3 {
@@ -1250,6 +1248,7 @@ cd-modal {
     }
 
     &[aria-expanded='true'] {
+      /* stylelint-disable-next-line custom-property-pattern */
       background-color: var(--pf-c-accordion__toggle--active--BackgroundColor) !important;
       border-left: 3px solid vv.$primary !important;
       color: vv.$primary !important;
@@ -1294,4 +1293,3 @@ cd-table-actions.btn-group.multisite-actions cds-overflow-menu .cds--btn--icon-o
     min-block-size: 0% !important;
   }
 }
-

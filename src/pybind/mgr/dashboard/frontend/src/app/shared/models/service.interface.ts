@@ -146,4 +146,3 @@ export enum QatOptions {
   sw = 'sw',
   none = 'none'
 }
-

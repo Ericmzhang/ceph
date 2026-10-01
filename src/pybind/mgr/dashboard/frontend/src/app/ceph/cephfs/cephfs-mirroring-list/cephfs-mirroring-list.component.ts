@@ -278,9 +278,7 @@ export class CephfsMirroringListComponent implements OnInit, OnDestroy {
     return {
       ...row,
       bytes_replicated: sync.info.bytesSynced,
-      last_sync: sync.info.syncedAt
-        ? this.relativeDatePipe.transform(sync.info.syncedAt)
-        : '-'
+      last_sync: sync.info.syncedAt ? this.relativeDatePipe.transform(sync.info.syncedAt) : '-'
     };
   }
 

@@ -690,7 +690,9 @@ export class CephfsMirroringFsMirrorPathsComponent implements OnInit, OnDestroy 
     };
   }
 
-  private checkpointStatusDisplay(status: MirrorCheckpointStatus): {
+  private checkpointStatusDisplay(
+    status: MirrorCheckpointStatus
+  ): {
     icon: keyof typeof ICON_TYPE;
     iconClass: string;
     statusLabel: string;

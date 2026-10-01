@@ -246,7 +246,6 @@ export interface MirrorStatusResponse {
   metrics?: MirrorStatusMetrics;
 }
 
-
 export function hasPendingReplication(
   status: MirrorStatusResponse | null | undefined,
   peerUuid?: string

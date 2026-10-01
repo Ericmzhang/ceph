@@ -5,7 +5,6 @@ import { configureTestBed } from '~/testing/unit-test-helper';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { SharedModule } from '../../shared.module';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { ToastrModule } from 'ngx-toastr';
 import { RouterTestingModule } from '@angular/router/testing';
 
 describe('CallHomeModalComponent', () => {
@@ -14,7 +13,7 @@ describe('CallHomeModalComponent', () => {
 
   configureTestBed({
     declarations: [CallHomeModalComponent],
-    imports: [SharedModule, HttpClientTestingModule, ToastrModule.forRoot(), RouterTestingModule],
+    imports: [SharedModule, HttpClientTestingModule, RouterTestingModule],
     providers: [NgbActiveModal]
   });
 

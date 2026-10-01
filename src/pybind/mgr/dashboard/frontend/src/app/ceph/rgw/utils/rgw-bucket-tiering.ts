@@ -2,6 +2,7 @@ import {
   Target,
   TierTarget,
   TIER_TYPE,
+  TIER_TYPE_DISPLAY,
   ZoneGroup,
   ZoneGroupDetails,
   StorageClassDetails,
@@ -104,5 +105,18 @@ export class BucketTieringUtils {
       }
     }
     return { zone_name: '', data_pool: '' };
+  }
+
+  static mapTierTypeDisplay(tierType: string): string {
+    switch (tierType?.toLowerCase()) {
+      case TIER_TYPE.CLOUD_TIER:
+        return TIER_TYPE_DISPLAY.CLOUD_TIER;
+      case TIER_TYPE.LOCAL:
+        return TIER_TYPE_DISPLAY.LOCAL;
+      case TIER_TYPE.GLACIER:
+        return TIER_TYPE_DISPLAY.GLACIER;
+      default:
+        return tierType;
+    }
   }
 }

@@ -12,7 +12,6 @@ import {
   NumberModule,
   SelectModule
 } from 'carbon-components-angular';
-import { ToastrModule } from 'ngx-toastr';
 import { SharedModule } from '~/app/shared/shared.module';
 
 import { RgwMultisiteImportComponent } from './rgw-multisite-import.component';
@@ -28,7 +27,6 @@ describe('RgwMultisiteImportComponent', () => {
       ReactiveFormsModule,
       RouterTestingModule,
       HttpClientTestingModule,
-      ToastrModule.forRoot(),
       ModalModule,
       InputModule,
       CheckboxModule,

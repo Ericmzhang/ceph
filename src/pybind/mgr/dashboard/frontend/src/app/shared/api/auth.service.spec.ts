@@ -7,7 +7,6 @@ import { configureTestBed } from '~/testing/unit-test-helper';
 import { LocalStorage } from '../enum/local-storage-enum';
 import { AuthStorageService } from '../services/auth-storage.service';
 import { AuthService } from './auth.service';
-import { LocalStorage } from '~/app/shared/enum/local-storage-enum';
 
 describe('AuthService', () => {
   let service: AuthService;

@@ -19,7 +19,6 @@ import { CdHelperClass } from '../../src/app/shared/classes/cd-helper.class';
 import { LocalStorage } from '../../src/app/shared/enum/local-storage-enum';
 import { Permissions } from '../../src/app/shared/models/permissions';
 import { table } from 'table';
-import { LocalStorage } from '../../src/app/shared/enum/local-storage-enum';
 /* tslint:enable*/
 let auth: any;
 
