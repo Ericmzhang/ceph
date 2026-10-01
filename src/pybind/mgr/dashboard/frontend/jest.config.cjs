@@ -14,6 +14,7 @@ const jestConfig = {
     '~/(.*)$': '<rootDir>/src/$1',
     '^@carbon/icons/es/(.*)$': '@carbon/icons/lib/$1.js',
     '^lodash-es$': 'lodash',
+    '^jspdf$': '<rootDir>/src/testing/jspdf.mock.js',
     '^@carbon/charts$': '<rootDir>/node_modules/@carbon/charts/dist/index.mjs'
   },
   moduleFileExtensions: ['ts', 'html', 'js', 'json', 'mjs', 'cjs'],

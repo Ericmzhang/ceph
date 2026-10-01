@@ -49,7 +49,7 @@ export class CallHomeNotificationService implements OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.subscription.unsubscribe();
+    this.subscription?.unsubscribe();
   }
 
   setVisibility(visible: boolean) {

@@ -2,12 +2,15 @@ import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
+import { of } from 'rxjs';
 
 import { RbdService } from '~/app/shared/api/rbd.service';
 import { CssHelper } from '~/app/shared/classes/css-helper';
 import { PipesModule } from '~/app/shared/pipes/pipes.module';
 import { AuthStorageService } from '~/app/shared/services/auth-storage.service';
 import { configureTestBed } from '~/testing/unit-test-helper';
+import { CallHomeNotificationService } from '~/app/shared/services/call-home-notification.service';
+import { StorageInsightsNotificationService } from '~/app/shared/services/storage-insights-notification.service';
 import { WorkbenchLayoutComponent } from './workbench-layout.component';
 
 describe('WorkbenchLayoutComponent', () => {
@@ -18,7 +21,13 @@ describe('WorkbenchLayoutComponent', () => {
     imports: [RouterTestingModule, PipesModule, HttpClientTestingModule],
     declarations: [WorkbenchLayoutComponent],
     schemas: [NO_ERRORS_SCHEMA],
-    providers: [AuthStorageService, CssHelper, RbdService]
+    providers: [
+      AuthStorageService,
+      CssHelper,
+      RbdService,
+      { provide: CallHomeNotificationService, useValue: { remindLaterOn$: of(false) } },
+      { provide: StorageInsightsNotificationService, useValue: { remindLaterOn$: of(false) } }
+    ]
   });
 
   beforeEach(() => {

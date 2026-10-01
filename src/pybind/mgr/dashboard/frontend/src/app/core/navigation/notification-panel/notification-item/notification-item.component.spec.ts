@@ -145,7 +145,7 @@ describe('NotificationItemComponent', () => {
     const appEl = fixture.nativeElement.querySelector('.cd-notification-item__app');
     expect(appEl).toBeTruthy();
     const img = appEl.querySelector('.cd-notification-item__app-icon');
-    expect(img.getAttribute('src')).toBe('assets/Ceph_Logo.svg');
+    expect(img.getAttribute('src')).toBe('assets/RedHat_favicon_0319.svg');
     expect(img.getAttribute('alt')).toBe('Ceph');
   });
 

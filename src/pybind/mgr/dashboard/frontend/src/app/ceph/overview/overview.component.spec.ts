@@ -20,6 +20,7 @@ import { MgrModuleService } from '~/app/shared/api/mgr-module.service';
 import { AuthStorageService } from '~/app/shared/services/auth-storage.service';
 import { OverviewStorageService } from '~/app/shared/api/storage-overview.service';
 import { PrometheusService } from '~/app/shared/api/prometheus.service';
+import { CallHomeService } from '~/app/shared/api/call-home.service';
 
 describe('OverviewComponent', () => {
   let component: OverviewComponent;
@@ -110,7 +111,11 @@ describe('OverviewComponent', () => {
         { provide: PrometheusService, useValue: mockPrometheusService },
         { provide: AuthStorageService, useValue: mockAuthStorageService },
         { provide: MgrModuleService, useValue: mockMgrModuleService },
-        { provide: HardwareService, useValue: mockHardwareService }
+        { provide: HardwareService, useValue: mockHardwareService },
+        {
+          provide: CallHomeService,
+          useValue: { getCallHomeStatus: () => of(false), status: () => of(null) }
+        }
       ]
     })
       .overrideComponent(OverviewComponent, {

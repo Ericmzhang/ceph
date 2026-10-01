@@ -17,12 +17,6 @@ describe('CallHomeModalComponent', () => {
     providers: [NgbActiveModal]
   });
 
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      declarations: [CallHomeModalComponent]
-    }).compileComponents();
-  });
-
   beforeEach(() => {
     fixture = TestBed.createComponent(CallHomeModalComponent);
     component = fixture.componentInstance;

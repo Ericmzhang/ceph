@@ -47,7 +47,7 @@ describe('LicenceAgreementComponent', () => {
     const mockResponse = 'Test license agreement text';
     jest.spyOn(component['clusterService'], 'getLicense').mockReturnValue({
       subscribe: (handlers: any) => {
-        handlers.next(mockResponse);
+        handlers.next({ license: mockResponse, call_home_notice: '' });
         return { unsubscribe: jest.fn() };
       }
     } as any);

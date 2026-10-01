@@ -327,22 +327,6 @@ describe('CephfsMirroringListComponent', () => {
 
     expect(emitted.length).toBe(0);
     expect(cephfsServiceMock.getMirrorStatus).not.toHaveBeenCalled();
-    expect(emitted[0]).toEqual({
-      remote_cluster_name: '-',
-      local_fs_name: 'fs2',
-      fs_name: 'fs2',
-      client_name: '-',
-      directory_count: 5,
-      filesystem_id: 20,
-      peerId: '-',
-      failure_count: 0,
-      recovery_count: 0,
-      sync_status: MirroringSyncStatus.NONE,
-      sync_status_label: '-',
-      id: '2-20',
-      bytes_replicated: '-',
-      last_sync: '-'
-    });
   });
 
   it('should not navigate to add path modal when filesystem_id is missing', () => {

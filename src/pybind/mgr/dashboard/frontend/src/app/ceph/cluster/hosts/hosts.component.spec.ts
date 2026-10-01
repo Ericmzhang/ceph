@@ -275,7 +275,7 @@ describe('HostsComponent', () => {
     expect(showForceMaintenanceModal.showModal).toBeFalsy();
   });
 
-  it('should set host edit modal submit label to Save changes', () => {
+  it('should set host edit modal submit label to Edit Host', () => {
     const hostService = TestBed.inject(HostService);
     const modalService = TestBed.inject(ModalCdsService);
     spyOn(hostService, 'getLabels').and.returnValue(of([]));
@@ -287,7 +287,7 @@ describe('HostsComponent', () => {
     component.editAction();
 
     expect(showSpy).toHaveBeenCalled();
-    expect(showSpy.calls.mostRecent().args[1].submitButtonText).toBe('Save changes');
+    expect(showSpy.calls.mostRecent().args[1].submitButtonText).toBe('Edit Host');
   });
 
   describe('table actions', () => {

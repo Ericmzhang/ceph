@@ -92,6 +92,7 @@ export class LoginComponent implements OnInit {
       error: (err) => {
         err.preventDefault();
         this.errorMessage = err.error?.detail || $localize`Invalid credentials`;
+        this.model.password = '';
         document.getElementById('username')?.focus();
       }
     });

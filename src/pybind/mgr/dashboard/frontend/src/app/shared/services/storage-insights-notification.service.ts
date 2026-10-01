@@ -54,7 +54,7 @@ export class StorageInsightsNotificationService implements OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.subscription.unsubscribe();
+    this.subscription?.unsubscribe();
   }
 
   setVisibility(visible: boolean) {

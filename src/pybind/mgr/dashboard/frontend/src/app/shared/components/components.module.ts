@@ -105,6 +105,9 @@ import ErrorFilledIcon from '@carbon/icons/es/error--filled/16';
 import InformationFilledIcon from '@carbon/icons/es/information--filled/16';
 import WarningFilledIcon from '@carbon/icons/es/warning--filled/16';
 import NotificationFilledIcon from '@carbon/icons/es/notification--filled/16';
+import Notification20 from '@carbon/icons/es/notification/20';
+import NotificationNew20 from '@carbon/icons/es/notification--new/20';
+import NotificationOff20 from '@carbon/icons/es/notification--off/20';
 import DataViewAlt16 from '@carbon/icons/es/data--view--alt/16';
 import DataCenter16 from '@carbon/icons/es/data--center/16';
 import Upgrade16 from '@carbon/icons/es/upgrade/16';
@@ -324,6 +327,9 @@ export class ComponentsModule {
       InformationFilledIcon,
       WarningFilledIcon,
       NotificationFilledIcon,
+      Notification20,
+      NotificationNew20,
+      NotificationOff20,
       Close16,
       DataViewAlt16,
       DataCenter16,

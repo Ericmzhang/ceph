@@ -118,10 +118,11 @@ describe('ActiveAlertListComponent', () => {
     });
 
     it('should populate map when hasDocUrls is true and alerts arrive', () => {
+      spyOn(component['docService'], 'urlGenerator').and.returnValue('https://example.com/docs');
       spyOn(component['docService'], 'alertDocUrl').and.returnValue(
         'https://example.com/docs#managing-alerts__cephhealtherror'
       );
-      component.hasDocUrls = true;
+      component['docService']['releaseDataSource'].next('7');
       component['prometheusAlertService'].alerts = [
         { labels: { alertname: 'CephHealthError' } } as any
       ];

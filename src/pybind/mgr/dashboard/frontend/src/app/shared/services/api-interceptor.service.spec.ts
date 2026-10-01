@@ -139,7 +139,7 @@ describe('ApiInterceptorService', () => {
       httpTesting.verify();
       expect(router.navigate).toHaveBeenCalledWith(
         ['error'],
-        { state: { header: 'Access Denied', icon: 'locked', message: "Sorry, you don't have permission to view this page or resource.", source: 'forbidden' } } // prettier-ignore
+        { state: { header: 'Access Denied', icon: 'locked', message: "Sorry, you don’t have permission to view this page or resource.", source: 'forbidden' } } // prettier-ignore
       );
     });
 

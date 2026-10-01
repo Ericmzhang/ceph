@@ -63,6 +63,10 @@ describe('UpgradeService', () => {
     service.start('18.1.0').subscribe();
     const req = httpTesting.expectOne('api/cluster/upgrade/start');
     expect(req.request.method).toBe('POST');
-    expect(req.request.body).toEqual({ version: '18.1.0' });
+    expect(req.request.body).toEqual({
+      image: undefined,
+      version: '18.1.0',
+      license_accepted: false
+    });
   });
 });

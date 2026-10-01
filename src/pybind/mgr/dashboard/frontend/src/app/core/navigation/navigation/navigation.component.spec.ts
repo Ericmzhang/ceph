@@ -17,6 +17,7 @@ import { PrometheusAlertService } from '~/app/shared/services/prometheus-alert.s
 import { SummaryService } from '~/app/shared/services/summary.service';
 import { SharedModule } from '~/app/shared/shared.module';
 import { configureTestBed } from '~/testing/unit-test-helper';
+import { environment } from '~/environments/environment';
 import { NavigationComponent } from './navigation.component';
 import { NotificationsComponent } from '../notifications/notifications.component';
 import { AdministrationComponent } from '../administration/administration.component';
@@ -224,7 +225,7 @@ describe('NavigationComponent', () => {
     it('should display correct text for navigation items', () => {
       fixture.detectChanges();
 
-      const expectedTexts = {
+      const expectedTexts: Record<string, string> = {
         '.tc_menuitem_overview': 'Overview',
         '.tc_submenuitem_multiCluster_overview': 'Overview',
         '.tc_submenuitem_multiCluster_manage_clusters': 'Manage clusters',
@@ -244,7 +245,6 @@ describe('NavigationComponent', () => {
         '.tc_submenuitem_block_images': 'Images',
         '.tc_submenuitem_block_mirroring': 'Mirroring',
         '.tc_submenuitem_block_iscsi': 'iSCSI',
-        '.tc_submenuitem_block_nvme': 'NVMe/TCP',
         '.tc_submenuitem_rgw_overview': 'Overview',
         '.tc_submenuitem_rgw_users': 'User management',
         '.tc_submenuitem_rgw_buckets': 'Buckets',
@@ -256,6 +256,9 @@ describe('NavigationComponent', () => {
         '.tc_submenuitem_file_cephfs': 'File systems',
         '.tc_submenuitem_file_nfs': 'NFS'
       };
+      if (environment.build === 'ibm') {
+        expectedTexts['.tc_submenuitem_block_nvme'] = 'NVMe/TCP';
+      }
 
       for (const [selector, expectedText] of Object.entries(expectedTexts)) {
         const element = fixture.debugElement.query(By.css(selector));
