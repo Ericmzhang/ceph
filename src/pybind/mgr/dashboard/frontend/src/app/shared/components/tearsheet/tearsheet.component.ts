@@ -13,7 +13,6 @@ import {
   OnChanges,
   SimpleChanges,
   ChangeDetectionStrategy,
-  ChangeDetectorRef,
   TemplateRef,
   ViewEncapsulation
 } from '@angular/core';
@@ -151,7 +150,6 @@ export class TearsheetComponent implements OnInit, AfterViewInit, OnDestroy, OnC
     private route: ActivatedRoute,
     private location: Location,
     private destroyRef: DestroyRef,
-    private cdr: ChangeDetectorRef,
     private actionLabels: ActionLabelsI18n
   ) {}
 

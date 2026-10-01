@@ -3,6 +3,8 @@ import { ActivatedRouteSnapshot, PreloadAllModules, RouterModule, Routes } from 
 
 import _ from 'lodash';
 
+import { environment } from '~/environments/environment';
+
 import { CephfsListComponent } from './ceph/cephfs/cephfs-list/cephfs-list.component';
 import { ConfigurationFormComponent } from './ceph/cluster/configuration/configuration-form/configuration-form.component';
 import { ConfigurationComponent } from './ceph/cluster/configuration/configuration.component';

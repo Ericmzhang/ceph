@@ -104,6 +104,10 @@ export class NavigationComponent implements OnInit, OnDestroy {
     );
   }
 
+  toggleSidebar() {
+    this.notificationService.togglePanel(!this.notificationService.getPanelState());
+  }
+
   checkClusterConnectionStatus() {
     this.clustersMap.forEach((clusterDetails, clusterName) => {
       const clusterTokenStatus = this.clusterTokenStatus[clusterDetails.name];

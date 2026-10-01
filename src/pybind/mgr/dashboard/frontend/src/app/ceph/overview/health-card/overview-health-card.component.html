@@ -1,12 +1,8 @@
-@let summary=(summary$ | async);
+@let summary = (summary$ | async);
 @let hwEnabled = (enabled$ | async);
-@let hwSections = (sections$ | async);
+@let hwData = (hardwareData$ | async);
 @let telemetryEnabled = (telemetryEnabled$ | async);
 @let pgAlertCount = pgAlertCount$ | async;
-@let summary = summary$ | async;
-
-@let colorClass="overview-health-card-status--" + vm?.clusterHealth?.icon;
-
 @let colorClass = "overview-health-card-status--" + vm?.clusterHealth?.icon;
 
 <cd-productive-card class="overview-health-card">

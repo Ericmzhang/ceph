@@ -20,9 +20,6 @@ import { CallHomeNotificationService } from '~/app/shared/services/call-home-not
 import { StorageInsightsNotificationService } from '~/app/shared/services/storage-insights-notification.service';
 import { environment } from '~/environments/environment';
 import _ from 'lodash';
-import { environment } from '../../../../environments/environment.ibm';
-import { CallHomeNotificationService } from '~/app/shared/services/call-home-notification.service';
-import { StorageInsightsNotificationService } from '~/app/shared/services/storage-insights-notification.service';
 
 @Component({
   selector: 'cd-workbench-layout',
@@ -41,12 +38,10 @@ export class WorkbenchLayoutComponent implements OnInit, OnDestroy {
   pageHeaderDescription: string | null = null;
   enabledFeature$: Observable<FeatureTogglesMap>;
   pageHeaderHidden = false;
-  enabledFeature$: Observable<FeatureTogglesMap>;
 
   @HostBinding('class') get class(): string {
     return 'top-notification-' + this.notifications.length;
   }
-  environment = environment;
 
   constructor(
     public router: Router,

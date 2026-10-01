@@ -37,8 +37,7 @@ import { NotificationService } from '../../services/notification.service';
         { params: { duration: '240ms', easing: 'cubic-bezier(0.2, 0, 0.38, 0.9)' } }
       )
     ])
-  ],
-  standalone: false
+  ]
 })
 export class ToastComponent implements OnInit, AfterViewChecked {
   activeToasts$: Observable<ToastContent[]>;

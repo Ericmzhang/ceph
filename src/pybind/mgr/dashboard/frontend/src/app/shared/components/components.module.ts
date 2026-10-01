@@ -250,7 +250,6 @@ import { CallHomeConnectivityStatusComponent } from './call-home-connectivity-st
     ClickableTileComponent,
     SidebarLayoutComponent,
     NumberWithUnitComponent,
-    ProductiveCardComponent,
     CallHomeModalComponent,
     CallHomeNotificationComponent,
     StorageInsightsModalComponent,
