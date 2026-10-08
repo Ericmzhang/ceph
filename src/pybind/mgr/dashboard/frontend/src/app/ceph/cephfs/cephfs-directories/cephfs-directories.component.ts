@@ -53,7 +53,8 @@ type TQuotaSettings = 'max_bytes' | 'max_files';
 @Component({
   selector: 'cd-cephfs-directories',
   templateUrl: './cephfs-directories.component.html',
-  styleUrls: ['./cephfs-directories.component.scss']
+  styleUrls: ['./cephfs-directories.component.scss'],
+  standalone: false
 })
 export class CephfsDirectoriesComponent implements OnInit, OnChanges {
   @ViewChild(TreeViewComponent)
@@ -498,8 +499,8 @@ export class CephfsDirectoriesComponent implements OnInit, OnChanges {
       this.selectedDir.quotas[key] === 0
         ? this.actionLabels.SET
         : values[key] === 0
-        ? this.actionLabels.UNSET
-        : $localize`Updated`;
+          ? this.actionLabels.UNSET
+          : $localize`Updated`;
     this.cephfsService.quota(this.id, path, values).subscribe(() => {
       if (onSuccess) {
         onSuccess();

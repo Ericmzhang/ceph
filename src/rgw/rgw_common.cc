@@ -92,6 +92,7 @@ rgw_http_errors rgw_http_s3_errors({
     { ERR_SIGNATURE_NO_MATCH, {403, "SignatureDoesNotMatch" }},
     { ERR_INVALID_ACCESS_KEY, {403, "InvalidAccessKeyId" }},
     { ERR_USER_SUSPENDED, {403, "UserSuspended" }},
+    { ERR_BUCKET_SUSPENDED, {403, "BucketSuspended" }},
     { ERR_REQUEST_TIME_SKEWED, {403, "RequestTimeTooSkewed" }},
     { ERR_QUOTA_EXCEEDED, {403, "QuotaExceeded" }},
     { ERR_MFA_REQUIRED, {403, "AccessDenied" }},
@@ -150,6 +151,7 @@ rgw_http_errors rgw_http_swift_errors({
     { EPERM, {401, "AccessDenied" }},
     { ENAMETOOLONG, {400, "Metadata name too long" }},
     { ERR_USER_SUSPENDED, {401, "UserSuspended" }},
+    { ERR_BUCKET_SUSPENDED, {403, "BucketSuspended" }},
     { ERR_INVALID_UTF8, {412, "Invalid UTF8" }},
     { ERR_BAD_URL, {412, "Bad URL" }},
     { ERR_NOT_SLO_MANIFEST, {400, "Not an SLO manifest" }},
@@ -2601,6 +2603,9 @@ void RGWBucketInfo::dump(Formatter *f) const
   if (!empty_sync_policy()) {
     encode_json("sync_policy", *sync_policy, f);
   }
+  if (obj_lock_enabled()) {
+    encode_json("obj_lock", obj_lock, f);
+  }
 }
 
 void RGWBucketInfo::decode_json(JSONObj *obj) {
@@ -2643,6 +2648,9 @@ void RGWBucketInfo::decode_json(JSONObj *obj) {
   JSONDecoder::decode_json("sync_policy", sp, obj);
   if (!sp.empty()) {
     set_sync_policy(std::move(sp));
+  }
+  if (obj_lock_enabled()) {
+    JSONDecoder::decode_json("obj_lock", obj_lock, obj);
   }
 }
 

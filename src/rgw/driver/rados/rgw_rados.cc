@@ -5135,7 +5135,7 @@ int RGWRados::copy_obj(RGWObjectCtx& src_obj_ctx,
   if (copy_data) { /* refcounting tail wouldn't work here, just copy the data */
     attrs.erase(RGW_ATTR_TAIL_TAG);
     return copy_obj_data(dest_obj_ctx, owner, dest_bucket_info, dest_placement, read_op, obj_size - 1, dest_obj,
-                         mtime, real_time(), attrs, olh_epoch, delete_at, petag, dp_factory, dpp, y);
+                         mtime, real_time(), attrs, olh_epoch, delete_at, petag, dp_factory, dpp, y, astate->accounted_size);
   }
 
   /* This has been in for 2 years, so we can safely assume amanifest is not NULL */
@@ -5306,6 +5306,7 @@ int RGWRados::copy_obj_data(RGWObjectCtx& obj_ctx,
                rgw::sal::DataProcessorFactory *dp_factory,
                const DoutPrefixProvider *dpp,
                optional_yield y,
+               uint64_t src_accounted_size,
                bool log_op)
 {
   string tag;
@@ -5374,8 +5375,13 @@ int RGWRados::copy_obj_data(RGWObjectCtx& obj_ctx,
       ldpp_dout(dpp, 0) << "ERROR: failed to read compression info" << dendl;
       return ret;
     }
-    // pass original size if compressed
-    accounted_size = compressed ? cs_info.orig_size : ofs;
+    // The bucket index accounted_size must be the object's logical (uncompressed)
+    // size. When the destination is compressed we take it from the compression info.
+    // Otherwise `ofs` is the number of RAW bytes read from the source: but if the source
+    // itself is compressed, the ofs is the *compressed* size, not the logical
+    // size. So, prefer the source's known logical size.
+    accounted_size = compressed ? cs_info.orig_size
+                                : (src_accounted_size ? src_accounted_size : ofs);
   }
 
   const req_context rctx{dpp, y, nullptr};
@@ -5481,6 +5487,7 @@ int RGWRados::transition_obj(RGWObjectCtx& obj_ctx,
                       nullptr, /* dp_factory */
                       dpp,
                       y,
+                      0, /* src_accounted_size: unknown here, keep ofs-based size */
                       log_op);
   if (ret < 0) {
     return ret;
@@ -6095,7 +6102,7 @@ int RGWRados::bucket_suspended(const DoutPrefixProvider *dpp, rgw_bucket& bucket
     return ret;
   }
 
-  *suspended = ((bucket_info.flags & BUCKET_SUSPENDED) != 0);
+  *suspended = bucket_info.bucket_suspended();
   return 0;
 }
 
@@ -7886,6 +7893,12 @@ int RGWRados::Bucket::UpdateIndex::guard_reshard(const DoutPrefixProvider *dpp, 
     }
 
     r = call(bs);
+    if (r == -ENOENT) {
+      ldpp_dout(dpp, 10) << "ENOENT in guard_reshard(), likely bucket resharding, retrying" << dendl;
+      invalidate_bs();
+      continue;
+    }
+
     if (r != -ERR_BUSY_RESHARDING) {
       break;
     }
@@ -8590,6 +8603,10 @@ int RGWRados::guard_reshard(const DoutPrefixProvider *dpp,
     }
 
     r = call(bs);
+    if (r == -ENOENT) {
+      ldpp_dout(dpp, 10) << "ENOENT in guard_reshard(), likely bucket resharding, retrying" << dendl;
+      continue;
+    }
     if (r != -ERR_BUSY_RESHARDING) {
       break;
     }
@@ -10367,14 +10384,14 @@ int RGWRados::gc_operate(const DoutPrefixProvider *dpp, string& oid, librados::O
   return rgw_rados_operate(dpp, gc_pool_ctx, oid, std::move(op), pbl, y);
 }
 
-int RGWRados::list_gc_objs(int *index, string& marker, uint32_t max, bool expired_only, std::list<cls_rgw_gc_obj_info>& result, bool *truncated, bool& processing_queue)
+int RGWRados::list_gc_objs(int& index, string& marker, uint32_t max, bool expired_only, std::list<cls_rgw_gc_obj_info>& result, bool& truncated, bool& processing_queue, std::optional<int> shard_id)
 {
-  return gc->list(index, marker, max, expired_only, result, truncated, processing_queue);
+  return gc->list(index, marker, max, expired_only, result, truncated, processing_queue, shard_id);
 }
 
-int RGWRados::process_gc(bool expired_only, optional_yield y)
+int RGWRados::process_gc(bool expired_only, optional_yield y, std::optional<int> shard_id)
 {
-  return gc->process(expired_only, y);
+  return gc->process(expired_only, y, shard_id);
 }
 
 int RGWRados::process_lc(const std::unique_ptr<rgw::sal::Bucket>& optional_bucket)

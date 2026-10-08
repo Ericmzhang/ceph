@@ -482,7 +482,7 @@ bool CephContext::check_experimental_feature_enabled(const std::string& feat,
   return enabled;
 }
 
-int CephContext::do_command(std::string_view command, const cmdmap_t& cmdmap,
+[[gnu::noinline]] int CephContext::do_command(std::string_view command, const cmdmap_t& cmdmap,
 			    Formatter *f,
 			    std::ostream& ss,
 			    bufferlist *out)
@@ -497,7 +497,8 @@ int CephContext::do_command(std::string_view command, const cmdmap_t& cmdmap,
 
 #pragma GCC push_options
 #pragma GCC optimize ("O0")
-static void leak_some_memory() {
+static void leak_some_memory(CephContext* cc) {
+  lgeneric_derr(cc) << "Leaking some memory" << dendl;
   volatile char *foo = new char[1234];
   (void)foo;
 }
@@ -521,7 +522,7 @@ int CephContext::_do_command(
     }
   }
   if (command == "leak_some_memory") {
-    leak_some_memory();
+    leak_some_memory(this);
   }
   else if (command == "perfcounters_dump" || command == "1" ||
       command == "perf dump") {
@@ -707,8 +708,6 @@ CephContext::CephContext(uint32_t module_type_,
     _perf_counters_collection(NULL),
     _perf_counters_conf_obs(NULL),
     _heartbeat_map(NULL),
-    _crypto_none(NULL),
-    _crypto_aes(NULL),
     _plugin_registry(NULL),
 #ifdef CEPH_DEBUG_MUTEX
     _lockdep_obs(NULL),
@@ -769,9 +768,8 @@ CephContext::CephContext(uint32_t module_type_,
   _admin_socket->register_command("log dump", _admin_hook, "dump recent log entries to log file");
   _admin_socket->register_command("log reopen", _admin_hook, "reopen log file");
 
-  _crypto_none = CryptoHandler::create(CEPH_CRYPTO_NONE);
-  _crypto_aes = CryptoHandler::create(CEPH_CRYPTO_AES);
   _crypto_random.reset(new CryptoRandom());
+  _crypto_mgr.reset(new CryptoManager(this));
 
   lookup_or_create_singleton_object<MempoolObs>("mempool_obs", false, this);
 }
@@ -831,8 +829,7 @@ CephContext::~CephContext()
   delete _log;
   _log = NULL;
 
-  delete _crypto_none;
-  delete _crypto_aes;
+  _crypto_mgr.reset();
   if (_crypto_inited > 0) {
     ceph_assert(_crypto_inited == 1);  // or else someone explicitly did
 				  // init but not shutdown
@@ -1031,15 +1028,16 @@ AdminSocket *CephContext::get_admin_socket()
   return _admin_socket;
 }
 
-CryptoHandler *CephContext::get_crypto_handler(int type)
+void CephContext::drop_temp_messenger_obj()
 {
-  switch (type) {
-  case CEPH_CRYPTO_NONE:
-    return _crypto_none;
-  case CEPH_CRYPTO_AES:
-    return _crypto_aes;
-  default:
-    return NULL;
+  auto i = associated_objs.begin();
+  while (i != associated_objs.end()) {
+    if (i->first.first.find("AsyncMessenger::NetworkStack") != std::string::npos) {
+      i = associated_objs.erase(i);
+      break;
+    } else {
+      ++i;
+    }
   }
 }
 

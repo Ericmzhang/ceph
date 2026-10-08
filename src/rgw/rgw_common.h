@@ -322,6 +322,7 @@ inline constexpr const char* RGW_REST_STS_XMLNS =
 #define ERR_NO_SUCH_BUCKET_ENCRYPTION_CONFIGURATION 2048
 #define ERR_NO_SUCH_PUBLIC_ACCESS_BLOCK_CONFIGURATION 2049
 #define ERR_USER_SUSPENDED       2100
+#define ERR_BUCKET_SUSPENDED     2101
 #define ERR_INTERNAL_ERROR       2200
 #define ERR_NOT_IMPLEMENTED      2201
 #define ERR_SERVICE_UNAVAILABLE  2202
@@ -1119,6 +1120,7 @@ struct RGWBucketInfo {
   bool mfa_enabled() const { return (versioning_status() & BUCKET_MFA_ENABLED) != 0; }
   bool datasync_flag_enabled() const { return (flags & BUCKET_DATASYNC_DISABLED) == 0; }
   bool obj_lock_enabled() const { return (flags & BUCKET_OBJ_LOCK_ENABLED) != 0; }
+  bool bucket_suspended() const { return (flags & BUCKET_SUSPENDED) != 0; }
   bool bucket_deleted() const { return (flags & BUCKET_DELETED) != 0; }
 
   bool has_swift_versioning() const {
@@ -1938,6 +1940,69 @@ extern bool match_policy(const std::string& pattern, const std::string& input,
 
 extern std::string camelcase_dash_http_attr(const std::string& orig, bool convert2dash = true);
 extern std::string lowercase_dash_http_attr(const std::string& orig, bool bidirection = false);
+
+/*
+ * Converts uppercase to lowercase and underscores to dashes
+ *
+ * `THIS_KIND_OF_STRING` to `this-kind-of-string`
+ *
+ * \param[in] in Range to transform
+ * \param[out] out Output iterator
+ * \param[in] bidirectional Transform '-' to '_'
+ *
+ * \return A structure of input and output iterators, as with std::transform.
+ */
+inline auto
+lowercase_dash_transform(
+    std::ranges::input_range auto&& in,
+    std::output_iterator<char> auto out,
+    bool bidirectional = false)
+{
+  return std::ranges::transform(
+      std::forward<decltype(in)>(in), out, [bidirectional](char c) -> char {
+        switch (c) {
+        case '_':
+          return '-';
+        case '-':
+          return bidirectional ? '_' : '-';
+        default:
+          return tolower(static_cast<unsigned char>(c));
+        }
+      });
+}
+
+/*
+ * Converts lower to upper and dashes to underscores
+ *
+ * 'this-kind-of-string' to 'THIS_KIND_OF_STRING'
+ *
+ * \param[in] in Range to transform
+ * \param[out] out Output iterator
+ * \param[in] bidirectional Transform '_' to '-'
+ *
+ * \return A structure of input and output iterators, as with std::transform.
+ */
+inline auto
+uppercase_dash_transform(
+    std::ranges::input_range auto&& in,
+    std::output_iterator<char> auto out,
+    bool bidirectional = false)
+{
+  return std::ranges::transform(
+      std::forward<decltype(in)>(in), out, [bidirectional](char c) -> char {
+        switch (c) {
+        case '-':
+          return '_';
+        case '_':
+          if (bidirectional)
+            return '-';
+          else
+            return toupper(static_cast<unsigned char>(c));
+        default:
+          return toupper(static_cast<unsigned char>(c));
+        }
+      });
+}
 
 void rgw_setup_saved_curl_handles();
 void rgw_release_all_curl_handles();

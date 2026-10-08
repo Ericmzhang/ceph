@@ -504,6 +504,8 @@ public:
   ~RGWCompleteMultipart_ObjStore_S3() override {}
 
   int get_params(optional_yield y) override;
+  int verify_encryption(std::map<std::string, bufferlist>& attrs,
+                        rgw::cksum::Type cksum_type) override;
   void send_response() override;
 };
 
@@ -1020,8 +1022,10 @@ public:
 
 
 class AWSGeneralAbstractor : public AWSEngine::VersionAbstractor {
+protected:
   CephContext* const cct;
 
+private:
   virtual boost::optional<std::string>
   get_v4_canonical_headers(const req_info& info,
                            const std::string_view& signedheaders,

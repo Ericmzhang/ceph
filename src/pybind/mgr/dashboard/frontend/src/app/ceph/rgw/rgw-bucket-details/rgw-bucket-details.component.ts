@@ -9,7 +9,8 @@ import { RgwBucketReplication } from '../models/rgw-bucket-replication';
 @Component({
   selector: 'cd-rgw-bucket-details',
   templateUrl: './rgw-bucket-details.component.html',
-  styleUrls: ['./rgw-bucket-details.component.scss']
+  styleUrls: ['./rgw-bucket-details.component.scss'],
+  standalone: false
 })
 export class RgwBucketDetailsComponent implements OnChanges {
   @Input()
@@ -27,7 +28,10 @@ export class RgwBucketDetailsComponent implements OnChanges {
   replicationData: RgwBucketReplication;
   bucketRateLimit: RgwRateLimitConfig;
 
-  constructor(private rgwBucketService: RgwBucketService, private cd: ChangeDetectorRef) {}
+  constructor(
+    private rgwBucketService: RgwBucketService,
+    private cd: ChangeDetectorRef
+  ) {}
 
   ngOnChanges() {
     this.updateBucketDetails(this.extraxtDetailsfromResponse.bind(this));
