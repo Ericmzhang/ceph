@@ -138,6 +138,7 @@ from cephadmlib.logging import (
 )
 from cephadmlib.systemd import check_unit, check_units, terminate_service, enable_service
 from cephadmlib import systemd_unit
+from cephadmlib.signals import send_signal_to_container_entrypoint
 from cephadmlib import runscripts
 from cephadmlib.container_types import (
     CephContainer,
@@ -168,7 +169,7 @@ from cephadmlib.container_daemon_form import (
 from cephadmlib.sysctl import install_sysctl, migrate_sysctl_dir
 from cephadmlib.firewalld import Firewalld, update_firewalld
 from cephadmlib import templating
-from cephadmlib.daemons.ceph import get_ceph_mounts_for_type, ceph_daemons
+from cephadmlib.daemons.ceph import get_ceph_mounts_for_type, ceph_daemons, update_osd_bluestore_affinity
 from cephadmlib.daemons import (
     Ceph,
     CephExporter,
@@ -179,6 +180,7 @@ from cephadmlib.daemons import (
     Keepalived,
     Monitoring,
     NFSGanesha,
+    OSD,
     SMB,
     SNMPGateway,
     MgmtGateway,
@@ -620,8 +622,28 @@ def create_daemon_dirs(
 
     if keyring:
         keyring_path = os.path.join(data_dir, 'keyring')
+        config_json = fetch_configs(ctx)
+        key_path_exists = False
+        key_path_content = 'N/A'
+        try:
+            key_path_exists = os.path.exists(keyring_path)
+            key_path_content = open(keyring_path, 'r').read()
+        except Exception:
+            pass
+        update_bluestore_label_osd_keyring = False
+        if (
+            ident.daemon_type == 'osd'
+            and key_path_exists
+            and key_path_content != keyring
+        ):
+            # need to update keyring with ceph-bluestore-tool
+            update_bluestore_label_osd_keyring = True
         with write_new(keyring_path, owner=(uid, gid)) as f:
             f.write(keyring)
+        if update_bluestore_label_osd_keyring:
+            osd_daemon_form = OSD.create(ctx, ident)
+            # osd_daemon_form = OSD.init(ctx, ctx.fsid, ident.daemon_id)
+            osd_daemon_form.rotate_osd_lv_keyring(ctx, keyring_path)
 
     if daemon_type in Monitoring.components.keys():
         config_json = fetch_configs(ctx)
@@ -3261,6 +3283,17 @@ def command_unit(ctx: CephadmContext) -> int:
     )
     return code
 
+
+@infer_fsid
+def command_signal(ctx: CephadmContext) -> int:
+    if not ctx.fsid:
+        raise Error('must pass --fsid to specify cluster')
+
+    container_name = DaemonIdentity.from_name(ctx.fsid, ctx.name).container_name
+
+    return send_signal_to_container_entrypoint(ctx, container_name, ctx.signal_name or ctx.signal_number)
+
+
 ##################################
 
 
@@ -4304,13 +4337,21 @@ def update_service_for_daemon(ctx: CephadmContext,
     # check if all the daemon names are valid
     if not set(update_daemons).issubset(set(available_daemons)):
         raise Error(f'Error EINVAL: one or more daemons of {update_daemons} does not exist on this host')
+    # osdspec_affinity stores the bare service id (e.g. "foobar"), not the
+    # full service name (e.g. "osd.foobar"), consistent with how ceph-volume
+    # writes it at OSD creation time via CEPH_VOLUME_OSDSPEC_AFFINITY.
+    _, _, service_id = ctx.service_name.partition('.')
+    if not service_id:
+        service_id = ctx.service_name
     for name in update_daemons:
         path = os.path.join(ctx.data_dir, ctx.fsid, name, 'unit.meta')
         update_meta_file(path, data)
+        update_osd_bluestore_affinity(ctx, name, service_id)
         print(f'Successfully updated daemon {name} with service {ctx.service_name}')
 
 
 @infer_fsid
+@infer_image
 def command_update_osd_service(ctx: CephadmContext) -> int:
     """update service for provided daemon"""
     update_daemons = [f'osd.{osd_id}' for osd_id in ctx.osd_ids.split(',')]
@@ -4504,6 +4545,11 @@ def _add_deploy_parser_args(
         action='append',
         default=[],
         help='Additional entrypoint arguments to apply to deamon'
+    )
+    parser_deploy.add_argument(
+        '--osd-dm-crypt-key',
+        default=None,
+        help="dm-crypt key for OSD, needed for deployment if OSD's cephx keyring has been rotated"
     )
 
 
@@ -4855,6 +4901,24 @@ def _get_parser():
         '--fsid',
         help='cluster FSID')
     _name_opts(parser_unit_install)
+
+    parser_signal = subparsers.add_parser(
+        'signal', help='Send signal to entrypoint of containerized daemon')
+    parser_signal.set_defaults(func=command_signal)
+    signal_group = parser_signal.add_mutually_exclusive_group(required=True)
+    signal_group.add_argument(
+        '--signal-number',
+        help='Signal number to send',)
+    signal_group.add_argument(
+        '--signal-name',
+        help='Signal to send')
+    parser_signal.add_argument(
+        '--fsid',
+        help='cluster FSID')
+    parser_signal.add_argument(
+        '--name', '-n',
+        required=True,
+        help='daemon name (type.id)')
 
     parser_logs = subparsers.add_parser(
         'logs', help='print journald logs for a daemon container')

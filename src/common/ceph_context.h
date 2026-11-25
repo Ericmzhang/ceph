@@ -48,8 +48,6 @@
 
 class AdminSocket;
 class AdminSocketHook;
-class CryptoHandler;
-class CryptoRandom;
 class MonMap;
 
 namespace ceph::common {
@@ -203,7 +201,7 @@ public:
 				       bool drop_on_fork,
 				       Args&&... args) {
     static_assert(sizeof(T) <= largest_singleton,
-		  "Please increase largest singleton.");
+		  "Please increase largest_singleton.");
     std::lock_guard lg(associated_objs_lock);
     std::type_index type = typeid(T);
 
@@ -225,7 +223,9 @@ public:
   /**
    * get a crypto handler
    */
-  CryptoHandler *get_crypto_handler(int type);
+  CryptoManager *get_crypto_manager() {
+    return _crypto_mgr.get();
+  }
 
   CryptoRandom* random() const { return _crypto_random.get(); }
 
@@ -272,6 +272,7 @@ public:
     _fork_watchers.push_back(w);
   }
 
+  void drop_temp_messenger_obj();
   void notify_pre_fork();
   void notify_post_fork();
 
@@ -366,9 +367,8 @@ private:
   std::vector<ForkWatcher*> _fork_watchers;
 
   // crypto
-  CryptoHandler *_crypto_none;
-  CryptoHandler *_crypto_aes;
   std::unique_ptr<CryptoRandom> _crypto_random;
+  std::unique_ptr<CryptoManager> _crypto_mgr;
 
   // experimental
   CephContextObs *_cct_obs;
